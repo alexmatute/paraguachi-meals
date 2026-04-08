@@ -185,6 +185,7 @@ IMPORTANTE:
 - Usa los ingredientes disponibles
 - Incluye el análisis de ingredientes
 - Marca "reutilizada": true en recetas que vienen de las PRE-APROBADAS
+${nutritionContext}
 - Responde SOLO con el JSON, sin texto adicional`;
 
     const userMessage = `Genera un plan de ${diasPlan} días con estos datos:
