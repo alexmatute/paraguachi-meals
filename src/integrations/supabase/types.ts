@@ -101,37 +101,183 @@ export type Database = {
       }
       profiles: {
         Row: {
+          altura_cm: number | null
+          ciudad: string | null
           creado_en: string | null
+          dispositivo: string | null
           email: string | null
+          fecha_nacimiento: string | null
+          foto_perfil: string | null
           id: string
+          ip_pais: string | null
           nombre: string | null
+          pais: string | null
+          peso_kg: number | null
+          problemas_salud: string[] | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           suscripcion_activa: boolean | null
           suscripcion_hasta: string | null
+          telefono: string | null
           telegram_id: number | null
+          ultima_conexion: string | null
         }
         Insert: {
+          altura_cm?: number | null
+          ciudad?: string | null
           creado_en?: string | null
+          dispositivo?: string | null
           email?: string | null
+          fecha_nacimiento?: string | null
+          foto_perfil?: string | null
           id: string
+          ip_pais?: string | null
           nombre?: string | null
+          pais?: string | null
+          peso_kg?: number | null
+          problemas_salud?: string[] | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           suscripcion_activa?: boolean | null
           suscripcion_hasta?: string | null
+          telefono?: string | null
           telegram_id?: number | null
+          ultima_conexion?: string | null
         }
         Update: {
+          altura_cm?: number | null
+          ciudad?: string | null
           creado_en?: string | null
+          dispositivo?: string | null
           email?: string | null
+          fecha_nacimiento?: string | null
+          foto_perfil?: string | null
           id?: string
+          ip_pais?: string | null
           nombre?: string | null
+          pais?: string | null
+          peso_kg?: number | null
+          problemas_salud?: string[] | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           suscripcion_activa?: boolean | null
           suscripcion_hasta?: string | null
+          telefono?: string | null
           telegram_id?: number | null
+          ultima_conexion?: string | null
+        }
+        Relationships: []
+      }
+      sesiones: {
+        Row: {
+          ciudad: string | null
+          dispositivo: string | null
+          fin: string | null
+          id: string
+          inicio: string | null
+          ip: string | null
+          navegador: string | null
+          pais: string | null
+          usuario_id: string
+        }
+        Insert: {
+          ciudad?: string | null
+          dispositivo?: string | null
+          fin?: string | null
+          id?: string
+          inicio?: string | null
+          ip?: string | null
+          navegador?: string | null
+          pais?: string | null
+          usuario_id: string
+        }
+        Update: {
+          ciudad?: string | null
+          dispositivo?: string | null
+          fin?: string | null
+          id?: string
+          inicio?: string | null
+          ip?: string | null
+          navegador?: string | null
+          pais?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sesiones_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      token_usage: {
+        Row: {
+          costo_usd: number | null
+          creado_en: string | null
+          id: string
+          modelo: string | null
+          plan_id: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+          tokens_total: number | null
+          usuario_id: string
+        }
+        Insert: {
+          costo_usd?: number | null
+          creado_en?: string | null
+          id?: string
+          modelo?: string | null
+          plan_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+          tokens_total?: number | null
+          usuario_id: string
+        }
+        Update: {
+          costo_usd?: number | null
+          creado_en?: string | null
+          id?: string
+          modelo?: string | null
+          plan_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+          tokens_total?: number | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_usage_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "planes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "token_usage_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -140,10 +286,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -270,6 +422,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "cliente"],
+    },
   },
 } as const
