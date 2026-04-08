@@ -11,53 +11,56 @@ import {
   goals, alergias, dietas, salud, preferenciasComida, tiemposCocina, equipamiento, mealTimes,
 } from "@/lib/onboarding-data";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/lib/i18n";
+import LangSwitcher from "@/components/LangSwitcher";
 
 const TOTAL_STEPS = 8;
 
-const dayOptions = [
-  { id: "auto", label: "Auto (máximo)", emoji: "✨" },
-  { id: "7", label: "7 días", emoji: "📅" },
-  { id: "14", label: "14 días", emoji: "📅" },
-  { id: "21", label: "21 días", emoji: "📅" },
-  { id: "28", label: "28 días", emoji: "📅" },
-];
-
-const inputMethods = [
-  { id: "foto-recibo", label: "Foto del Recibo", emoji: "🧾" },
-  { id: "foto-nevera", label: "Foto de Nevera", emoji: "🧊" },
-  { id: "lista-manual", label: "Lista Manual", emoji: "📝" },
-  { id: "ayuda-comprar", label: "Ayúdame a Comprar", emoji: "🛒" },
-];
-
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { t, lang } = useI18n();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Step 1
   const [inputMethod, setInputMethod] = useState("");
   const [manualIngredients, setManualIngredients] = useState("");
-
-  // Step 2
   const [selectedFoods, setSelectedFoods] = useState<string[]>([]);
-
-  // Step 3
   const [personas, setPersonas] = useState(2);
   const [selectedMeals, setSelectedMeals] = useState<string[]>(["Desayuno", "Almuerzo", "Cena"]);
-
-  // Step 4
   const [selectedGoal, setSelectedGoal] = useState("");
-
-  // Step 5
   const [restrictions, setRestrictions] = useState<string[]>([]);
-
-  // Step 6
   const [cookingTime, setCookingTime] = useState("");
   const [skillLevel, setSkillLevel] = useState("Principiante");
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
-
-  // Step 7 - meal count
   const [selectedDays, setSelectedDays] = useState("28");
+
+  const inputMethods = [
+    { id: "foto-recibo", label: t("onboarding.step1.receipt"), emoji: "🧾" },
+    { id: "foto-nevera", label: t("onboarding.step1.fridge"), emoji: "🧊" },
+    { id: "lista-manual", label: t("onboarding.step1.manual"), emoji: "📝" },
+    { id: "ayuda-comprar", label: t("onboarding.step1.help"), emoji: "🛒" },
+  ];
+
+  const dayOptions = [
+    { id: "auto", label: t("onboarding.step7.auto"), emoji: "✨" },
+    { id: "7", label: `7 ${t("onboarding.step7.days")}`, emoji: "📅" },
+    { id: "14", label: `14 ${t("onboarding.step7.days")}`, emoji: "📅" },
+    { id: "21", label: `21 ${t("onboarding.step7.days")}`, emoji: "📅" },
+    { id: "28", label: `28 ${t("onboarding.step7.days")}`, emoji: "📅" },
+  ];
+
+  const localGoals = goals.map(g => ({ ...g, label: t(`data.goal.${g.id}`) }));
+  const localTimes = tiemposCocina.map(tc => ({ ...tc, label: t(`data.time.${tc.id}`) }));
+  const skillLevels = [
+    { value: "Principiante", label: t("data.skill.beginner") },
+    { value: "Básico", label: t("data.skill.basic") },
+    { value: "Intermedio", label: t("data.skill.intermediate") },
+    { value: "Avanzado", label: t("data.skill.advanced") },
+  ];
+  const localMealTimes = mealTimes.map((m, i) => {
+    const keys = ["breakfast", "midmorning", "lunch", "snack", "dinner", "nightsnack"];
+    return { value: m, label: t(`data.meal.${keys[i]}`) };
+  });
 
   const toggleItem = (list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
     setList(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
@@ -67,9 +70,8 @@ const Onboarding = () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Debes iniciar sesión"); setLoading(false); return; }
+      if (!user) { toast.error(t("onboarding.loginRequired")); setLoading(false); return; }
 
-      // Save preferences
       const prefs = {
         usuario_id: user.id,
         personas,
@@ -84,19 +86,18 @@ const Onboarding = () => {
       await supabase.from("preferencias").upsert(prefs, { onConflict: "usuario_id" });
 
       const ingredientes = [...selectedFoods, ...manualIngredients.split("\n").filter(Boolean)].join(", ");
-
       const diasSolicitados = selectedDays === "auto" ? 28 : parseInt(selectedDays);
 
       const { data, error } = await supabase.functions.invoke("generate-plan", {
-        body: { ingredientes, preferencias: prefs, usuario_id: user.id, dias_solicitados: diasSolicitados },
+        body: { ingredientes, preferencias: prefs, usuario_id: user.id, dias_solicitados: diasSolicitados, idioma: lang },
       });
 
       if (error) throw error;
 
-      toast.success("¡Plan generado exitosamente!");
+      toast.success(t("onboarding.success"));
       navigate(`/plan/${data.plan_id}`);
     } catch (err: any) {
-      toast.error("Error al generar el plan: " + (err.message || "Intenta de nuevo"));
+      toast.error(t("onboarding.error") + (err.message || ""));
     } finally {
       setLoading(false);
     }
@@ -130,25 +131,23 @@ const Onboarding = () => {
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="mx-auto max-w-2xl">
-        {/* Header */}
         <div className="mb-8 text-center">
+          <div className="flex justify-center mb-4"><LangSwitcher /></div>
           <ChefHat className="mx-auto h-8 w-8 text-primary" />
-          <h1 className="mt-2 font-heading text-xl font-bold">Personaliza tu plan</h1>
+          <h1 className="mt-2 font-heading text-xl font-bold">{t("onboarding.title")}</h1>
         </div>
 
-        {/* Progress */}
         <div className="mb-8 flex gap-1">
           {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i < step ? "bg-primary" : "bg-border"}`} />
           ))}
         </div>
-        <p className="mb-6 text-sm text-muted-foreground text-center">Paso {step} de {TOTAL_STEPS}</p>
+        <p className="mb-6 text-sm text-muted-foreground text-center">{t("onboarding.step")} {step} {t("onboarding.of")} {TOTAL_STEPS}</p>
 
-        {/* Steps */}
         <div className="card-surface p-6">
           {step === 1 && (
             <div>
-              <h2 className="font-heading text-lg font-bold mb-4">¿Cómo quieres ingresar tus ingredientes?</h2>
+              <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step1.title")}</h2>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 {inputMethods.map(m => (
                   <button key={m.id} onClick={() => setInputMethod(m.id)}
@@ -161,42 +160,42 @@ const Onboarding = () => {
               {(inputMethod === "foto-recibo" || inputMethod === "foto-nevera") && (
                 <div className="mt-4 rounded-xl border-2 border-dashed border-border p-8 text-center">
                   <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <p className="mt-2 text-sm text-muted-foreground">Sube tu foto aquí</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{t("onboarding.step1.upload")}</p>
                 </div>
               )}
               {(inputMethod === "lista-manual" || inputMethod === "ayuda-comprar") && (
-                <Textarea placeholder="Escribe tus ingredientes, uno por línea..." value={manualIngredients} onChange={e => setManualIngredients(e.target.value)} className="mt-4 bg-background border-border min-h-[120px]" />
+                <Textarea placeholder={t("onboarding.step1.placeholder")} value={manualIngredients} onChange={e => setManualIngredients(e.target.value)} className="mt-4 bg-background border-border min-h-[120px]" />
               )}
             </div>
           )}
 
           {step === 2 && (
             <div className="max-h-[60vh] overflow-y-auto pr-2">
-              <h2 className="font-heading text-lg font-bold mb-4">Selecciona tus alimentos</h2>
-              <FoodCategory title="🥩 Proteínas Animales" items={proteinasAnimales} />
-              <FoodCategory title="🌱 Proteínas Vegetales" items={proteinasVegetales} />
-              <FoodCategory title="🧀 Lácteos" items={lacteos} />
-              <FoodCategory title="🌾 Granos" items={granos} />
-              <FoodCategory title="🥬 Vegetales" items={vegetales} />
-              <FoodCategory title="🍎 Frutas" items={frutas} />
-              <FoodCategory title="🧂 Condimentos" items={condimentos} />
+              <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step2.title")}</h2>
+              <FoodCategory title={t("onboarding.step2.animalProteins")} items={proteinasAnimales} />
+              <FoodCategory title={t("onboarding.step2.plantProteins")} items={proteinasVegetales} />
+              <FoodCategory title={t("onboarding.step2.dairy")} items={lacteos} />
+              <FoodCategory title={t("onboarding.step2.grains")} items={granos} />
+              <FoodCategory title={t("onboarding.step2.veggies")} items={vegetales} />
+              <FoodCategory title={t("onboarding.step2.fruits")} items={frutas} />
+              <FoodCategory title={t("onboarding.step2.spices")} items={condimentos} />
             </div>
           )}
 
           {step === 3 && (
             <div>
-              <h2 className="font-heading text-lg font-bold mb-4">¿Para cuántas personas?</h2>
+              <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step3.title")}</h2>
               <div className="flex items-center justify-center gap-4 mb-8">
                 <button onClick={() => setPersonas(Math.max(1, personas - 1))} className="rounded-full border border-border p-2 hover:border-primary"><Minus className="h-5 w-5" /></button>
                 <span className="font-heading text-4xl font-bold text-primary">{personas}</span>
                 <button onClick={() => setPersonas(Math.min(12, personas + 1))} className="rounded-full border border-border p-2 hover:border-primary"><Plus className="h-5 w-5" /></button>
               </div>
-              <h3 className="font-heading text-base font-semibold mb-3">Comidas del día</h3>
+              <h3 className="font-heading text-base font-semibold mb-3">{t("onboarding.step3.meals")}</h3>
               <div className="flex flex-wrap gap-2">
-                {mealTimes.map(meal => (
-                  <button key={meal} onClick={() => toggleItem(selectedMeals, setSelectedMeals, meal)}
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${selectedMeals.includes(meal) ? "bg-primary/20 border-primary text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>
-                    {meal}
+                {localMealTimes.map(meal => (
+                  <button key={meal.value} onClick={() => toggleItem(selectedMeals, setSelectedMeals, meal.value)}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${selectedMeals.includes(meal.value) ? "bg-primary/20 border-primary text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                    {meal.label}
                   </button>
                 ))}
               </div>
@@ -205,9 +204,9 @@ const Onboarding = () => {
 
           {step === 4 && (
             <div>
-              <h2 className="font-heading text-lg font-bold mb-4">¿Cuál es tu objetivo?</h2>
+              <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step4.title")}</h2>
               <div className="grid grid-cols-2 gap-3">
-                {goals.map(g => (
+                {localGoals.map(g => (
                   <button key={g.id} onClick={() => setSelectedGoal(g.id)}
                     className={`rounded-xl border p-4 text-center transition-colors ${selectedGoal === g.id ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
                     <span className="text-2xl">{g.emoji}</span>
@@ -220,36 +219,36 @@ const Onboarding = () => {
 
           {step === 5 && (
             <div>
-              <h2 className="font-heading text-lg font-bold mb-4">Restricciones y preferencias</h2>
-              <h3 className="text-sm font-semibold text-primary mb-2">Alergias</h3>
+              <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step5.title")}</h2>
+              <h3 className="text-sm font-semibold text-primary mb-2">{t("onboarding.step5.allergies")}</h3>
               <TagToggle items={alergias} selected={restrictions} setSelected={setRestrictions} />
-              <h3 className="text-sm font-semibold text-primary mb-2 mt-4">Dietas</h3>
+              <h3 className="text-sm font-semibold text-primary mb-2 mt-4">{t("onboarding.step5.diets")}</h3>
               <TagToggle items={dietas} selected={restrictions} setSelected={setRestrictions} />
-              <h3 className="text-sm font-semibold text-primary mb-2 mt-4">Salud</h3>
+              <h3 className="text-sm font-semibold text-primary mb-2 mt-4">{t("onboarding.step5.health")}</h3>
               <TagToggle items={salud} selected={restrictions} setSelected={setRestrictions} />
-              <h3 className="text-sm font-semibold text-primary mb-2 mt-4">Preferencias</h3>
+              <h3 className="text-sm font-semibold text-primary mb-2 mt-4">{t("onboarding.step5.prefs")}</h3>
               <TagToggle items={preferenciasComida} selected={restrictions} setSelected={setRestrictions} />
             </div>
           )}
 
           {step === 6 && (
             <div>
-              <h2 className="font-heading text-lg font-bold mb-4">Tu cocina</h2>
-              <h3 className="text-sm font-semibold text-primary mb-2">Tiempo de cocina</h3>
+              <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step6.title")}</h2>
+              <h3 className="text-sm font-semibold text-primary mb-2">{t("onboarding.step6.time")}</h3>
               <div className="grid grid-cols-2 gap-3 mb-4">
-                {tiemposCocina.map(t => (
-                  <button key={t.id} onClick={() => setCookingTime(t.id)}
-                    className={`rounded-xl border p-3 text-center transition-colors ${cookingTime === t.id ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
-                    <span className="text-xl">{t.emoji}</span>
-                    <p className="mt-1 text-xs font-medium">{t.label}</p>
+                {localTimes.map(tc => (
+                  <button key={tc.id} onClick={() => setCookingTime(tc.id)}
+                    className={`rounded-xl border p-3 text-center transition-colors ${cookingTime === tc.id ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
+                    <span className="text-xl">{tc.emoji}</span>
+                    <p className="mt-1 text-xs font-medium">{tc.label}</p>
                   </button>
                 ))}
               </div>
-              <h3 className="text-sm font-semibold text-primary mb-2">Nivel culinario</h3>
+              <h3 className="text-sm font-semibold text-primary mb-2">{t("onboarding.step6.level")}</h3>
               <select value={skillLevel} onChange={e => setSkillLevel(e.target.value)} className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground">
-                {["Principiante", "Básico", "Intermedio", "Avanzado"].map(l => <option key={l} value={l}>{l}</option>)}
+                {skillLevels.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
-              <h3 className="text-sm font-semibold text-primary mb-2 mt-4">Equipamiento</h3>
+              <h3 className="text-sm font-semibold text-primary mb-2 mt-4">{t("onboarding.step6.equipment")}</h3>
               <div className="flex flex-wrap gap-2">
                 {equipamiento.map(eq => (
                   <button key={eq} onClick={() => toggleItem(selectedEquipment, setSelectedEquipment, eq)}
@@ -263,7 +262,7 @@ const Onboarding = () => {
 
           {step === 7 && (
             <div>
-              <h2 className="font-heading text-lg font-bold mb-4">¿Cuántas comidas quieres preparar?</h2>
+              <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step7.title")}</h2>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 {dayOptions.map(opt => (
                   <button key={opt.id} onClick={() => setSelectedDays(opt.id)}
@@ -274,9 +273,9 @@ const Onboarding = () => {
                 ))}
               </div>
               <div className="card-surface p-4 border-primary/30 text-center">
-                <p className="text-sm text-muted-foreground">Basado en tus ingredientes, podemos generar aproximadamente:</p>
+                <p className="text-sm text-muted-foreground">{t("onboarding.step7.based")}</p>
                 <p className="mt-1 font-heading text-lg font-bold text-primary">
-                  🍽️ Hasta {(selectedDays === "auto" ? 28 : parseInt(selectedDays)) * selectedMeals.length} recetas únicas
+                  {t("onboarding.step7.upTo")} {(selectedDays === "auto" ? 28 : parseInt(selectedDays)) * selectedMeals.length} {t("onboarding.step7.uniqueRecipes")}
                 </p>
               </div>
             </div>
@@ -284,37 +283,36 @@ const Onboarding = () => {
 
           {step === 8 && (
             <div>
-              <h2 className="font-heading text-lg font-bold mb-4">Resumen</h2>
+              <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step8.title")}</h2>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Personas</span><span>{personas}</span></div>
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Comidas</span><span>{selectedMeals.join(", ")}</span></div>
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Objetivo</span><span>{goals.find(g => g.id === selectedGoal)?.label || "—"}</span></div>
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Restricciones</span><span>{restrictions.join(", ") || "Ninguna"}</span></div>
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Tiempo</span><span>{tiemposCocina.find(t => t.id === cookingTime)?.label || "—"}</span></div>
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Nivel</span><span>{skillLevel}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Equipamiento</span><span>{selectedEquipment.join(", ") || "—"}</span></div>
+                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">{t("onboarding.step8.people")}</span><span>{personas}</span></div>
+                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">{t("onboarding.step8.meals")}</span><span>{selectedMeals.join(", ")}</span></div>
+                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">{t("onboarding.step8.goal")}</span><span>{localGoals.find(g => g.id === selectedGoal)?.label || "—"}</span></div>
+                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">{t("onboarding.step8.restrictions")}</span><span>{restrictions.join(", ") || t("common.none")}</span></div>
+                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">{t("onboarding.step8.time")}</span><span>{localTimes.find(tc => tc.id === cookingTime)?.label || "—"}</span></div>
+                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">{t("onboarding.step8.level")}</span><span>{skillLevels.find(l => l.value === skillLevel)?.label}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{t("onboarding.step8.equipment")}</span><span>{selectedEquipment.join(", ") || "—"}</span></div>
               </div>
               {!loading ? (
                 <Button onClick={handleGenerate} className="w-full mt-6 bg-primary text-primary-foreground font-heading font-semibold h-12">
-                  🚀 Generar mi plan de {selectedDays === "auto" ? "28" : selectedDays} días
+                  {t("onboarding.generate")} {selectedDays === "auto" ? "28" : selectedDays} {t("onboarding.step7.days")}
                 </Button>
               ) : (
                 <div className="mt-6 text-center">
                   <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                  <p className="mt-3 text-sm text-muted-foreground animate-pulse-glow">Generando tu plan personalizado...</p>
+                  <p className="mt-3 text-sm text-muted-foreground animate-pulse-glow">{t("onboarding.generating")}</p>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Navigation */}
         <div className="mt-6 flex justify-between">
           {step > 1 ? (
-            <Button variant="ghost" onClick={() => setStep(s => s - 1)} className="text-muted-foreground">← Anterior</Button>
+            <Button variant="ghost" onClick={() => setStep(s => s - 1)} className="text-muted-foreground">{t("common.prev")}</Button>
           ) : <div />}
           {step < TOTAL_STEPS && (
-            <Button onClick={() => setStep(s => s + 1)} className="bg-primary text-primary-foreground">Siguiente →</Button>
+            <Button onClick={() => setStep(s => s + 1)} className="bg-primary text-primary-foreground">{t("common.next")}</Button>
           )}
         </div>
       </div>

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChefHat, LogOut, Plus, Calendar, Loader2, User, Download, Share2, FileText, Lightbulb, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
+import LangSwitcher from "@/components/LangSwitcher";
 
 interface Plan {
   id: string;
@@ -25,6 +27,7 @@ interface Profile {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { t, lang } = useI18n();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -47,10 +50,7 @@ const Dashboard = () => {
     load();
   }, [navigate]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
+  const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
 
   const handleExportHTML = async (planId: string) => {
     setExporting(planId);
@@ -59,29 +59,22 @@ const Dashboard = () => {
       if (error) throw error;
       const blob = new Blob([data.html], { type: "text/html" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `plan-paraguachi-${planId.substring(0, 8)}.html`;
-      a.click();
+      const a = document.createElement("a"); a.href = url; a.download = `plan-paraguachi-${planId.substring(0, 8)}.html`; a.click();
       URL.revokeObjectURL(url);
-      toast.success("HTML descargado");
-    } catch {
-      toast.error("Error al exportar HTML");
-    } finally {
-      setExporting(null);
-    }
+      toast.success(t("dashboard.htmlDownloaded"));
+    } catch { toast.error(t("dashboard.htmlError")); } finally { setExporting(null); }
   };
 
   const handleShare = (publicToken?: string) => {
     if (!publicToken) return;
-    const url = `${window.location.origin}/ver-plan/${publicToken}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Enlace copiado al portapapeles");
+    navigator.clipboard.writeText(`${window.location.origin}/ver-plan/${publicToken}`);
+    toast.success(t("dashboard.linkCopied"));
   };
 
   const userName = profile?.nombre || "Usuario";
   const totalRecipes = plans.reduce((acc, p) => acc + (p.semanas || 4) * 7 * 3, 0);
-  const memberSince = profile?.creado_en ? new Date(profile.creado_en).toLocaleDateString("es-ES", { month: "long", year: "numeric" }) : "";
+  const locale = lang === "es" ? "es-ES" : "en-US";
+  const memberSince = profile?.creado_en ? new Date(profile.creado_en).toLocaleDateString(locale, { month: "long", year: "numeric" }) : "";
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,6 +85,7 @@ const Dashboard = () => {
             <span className="font-heading text-lg font-bold text-primary">Paraguachi</span>
           </div>
           <div className="flex items-center gap-3">
+            <LangSwitcher />
             <Link to="/perfil">
               <Avatar className="h-8 w-8 border border-border">
                 <AvatarImage src={profile?.foto_perfil || undefined} />
@@ -99,7 +93,7 @@ const Dashboard = () => {
               </Avatar>
             </Link>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${profile?.suscripcion_activa ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
-              {profile?.suscripcion_activa ? "Activa" : "Inactiva"}
+              {profile?.suscripcion_activa ? t("common.active") : t("common.inactive")}
             </span>
             <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground"><LogOut className="h-4 w-4" /></button>
           </div>
@@ -107,57 +101,47 @@ const Dashboard = () => {
       </header>
 
       <main className="container py-8">
-        {/* Welcome */}
         <div className="mb-8">
-          <h1 className="font-heading text-2xl font-bold">Hola, {userName} 👋</h1>
+          <h1 className="font-heading text-2xl font-bold">{t("dashboard.hello")} {userName} 👋</h1>
           <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-            <span>{plans.length} planes generados</span>
-            <span>~{totalRecipes} recetas únicas</span>
-            {memberSince && <span>Miembro desde {memberSince}</span>}
+            <span>{plans.length} {t("dashboard.plans")}</span>
+            <span>~{totalRecipes} {t("dashboard.recipes")}</span>
+            {memberSince && <span>{t("dashboard.memberSince")} {memberSince}</span>}
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="mb-8 flex flex-wrap gap-3">
-          <Link to="/onboarding">
-            <Button className="bg-primary text-primary-foreground font-semibold gap-2"><Plus className="h-4 w-4" /> Nuevo plan</Button>
-          </Link>
-          {plans.length > 0 && (
-            <Link to={`/plan/${plans[0].id}`}>
-              <Button variant="outline" className="gap-2 border-border"><FileText className="h-4 w-4" /> Mi último plan</Button>
-            </Link>
-          )}
+          <Link to="/onboarding"><Button className="bg-primary text-primary-foreground font-semibold gap-2"><Plus className="h-4 w-4" /> {t("dashboard.newPlan")}</Button></Link>
+          {plans.length > 0 && <Link to={`/plan/${plans[0].id}`}><Button variant="outline" className="gap-2 border-border"><FileText className="h-4 w-4" /> {t("dashboard.lastPlan")}</Button></Link>}
         </div>
 
-        {/* Telegram widget */}
         {!profile?.telegram_id && (
           <div className="mb-6 card-surface p-4 flex items-center gap-4">
             <MessageCircle className="h-8 w-8 text-blue-400 shrink-0" />
             <div className="flex-1">
-              <h3 className="font-heading text-sm font-semibold">Conecta Telegram</h3>
-              <p className="text-xs text-muted-foreground">Recibe tus planes y recordatorios por Telegram</p>
+              <h3 className="font-heading text-sm font-semibold">{t("dashboard.connectTelegram")}</h3>
+              <p className="text-xs text-muted-foreground">{t("dashboard.telegramDesc")}</p>
             </div>
-            <Link to="/perfil"><Button size="sm" variant="outline" className="border-border text-xs">Conectar</Button></Link>
+            <Link to="/perfil"><Button size="sm" variant="outline" className="border-border text-xs">{t("dashboard.telegramConnect")}</Button></Link>
           </div>
         )}
         {profile?.telegram_id && (
           <div className="mb-6 card-surface p-4 flex items-center gap-3">
             <MessageCircle className="h-5 w-5 text-primary" />
-            <span className="text-xs text-primary font-medium">✅ Telegram conectado</span>
+            <span className="text-xs text-primary font-medium">{t("dashboard.telegramConnected")}</span>
           </div>
         )}
 
-        {/* Plans */}
-        <h2 className="font-heading text-lg font-bold mb-4">Mis planes</h2>
+        <h2 className="font-heading text-lg font-bold mb-4">{t("dashboard.myPlans")}</h2>
 
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : plans.length === 0 ? (
           <div className="card-surface p-12 text-center">
             <ChefHat className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 font-heading text-lg font-semibold">Sin planes aún</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Genera tu primer plan de comidas personalizado</p>
-            <Link to="/onboarding" className="block mt-6"><Button className="bg-primary text-primary-foreground font-semibold">Comenzar →</Button></Link>
+            <h3 className="mt-4 font-heading text-lg font-semibold">{t("dashboard.noPlans")}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{t("dashboard.noPlansDesc")}</p>
+            <Link to="/onboarding" className="block mt-6"><Button className="bg-primary text-primary-foreground font-semibold">{t("dashboard.start")}</Button></Link>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -166,21 +150,21 @@ const Dashboard = () => {
                 <Link to={`/plan/${plan.id}`} className="block">
                   <div className="flex items-center gap-2 text-muted-foreground mb-3">
                     <Calendar className="h-4 w-4" />
-                    <span className="text-xs">{new Date(plan.creado_en).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })}</span>
+                    <span className="text-xs">{new Date(plan.creado_en).toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" })}</span>
                   </div>
                   <h3 className="font-heading font-semibold group-hover:text-primary transition-colors">
-                    Plan de {plan.dias_generados || plan.semanas * 7} días
+                    {t("dashboard.planOf")} {plan.dias_generados || plan.semanas * 7} {t("dashboard.daysUnit")}
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{plan.ingredientes}</p>
                 </Link>
                 <div className="mt-4 flex gap-2">
-                  <Link to={`/plan/${plan.id}`} className="text-xs text-primary font-medium hover:underline">Ver plan →</Link>
+                  <Link to={`/plan/${plan.id}`} className="text-xs text-primary font-medium hover:underline">{t("common.viewPlan")}</Link>
                   <button onClick={() => handleExportHTML(plan.id)} disabled={exporting === plan.id} className="text-xs text-muted-foreground hover:text-primary disabled:opacity-50 flex items-center gap-1">
                     {exporting === plan.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} HTML
                   </button>
                   {plan.public_token && (
                     <button onClick={() => handleShare(plan.public_token)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                      <Share2 className="h-3 w-3" /> Compartir
+                      <Share2 className="h-3 w-3" /> {t("common.share")}
                     </button>
                   )}
                 </div>
@@ -189,11 +173,10 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Suggestions widget */}
         {plans.length > 0 && (
           <div className="mt-8 card-surface p-5">
             <h3 className="font-heading text-sm font-semibold flex items-center gap-2 mb-3">
-              <Lightbulb className="h-4 w-4 text-secondary" /> Para tu próximo plan, considera agregar:
+              <Lightbulb className="h-4 w-4 text-secondary" /> {t("dashboard.suggestions")}
             </h3>
             <div className="flex flex-wrap gap-2">
               {["Aguacate", "Quinoa", "Camote", "Yogurt griego", "Espinaca"].map(item => (
@@ -205,9 +188,7 @@ const Dashboard = () => {
       </main>
 
       <footer className="border-t border-border/50 py-6">
-        <p className="text-center text-[11px] text-muted-foreground">
-          Paraguachi Meals Prep · Ing. Chef Alexander Matute & Ing. Nelly Rendón, Especialista en Manipulación y Conservación de Alimentos · Los Angeles, CA
-        </p>
+        <p className="text-center text-[11px] text-muted-foreground">{t("footer.credits")}</p>
       </footer>
     </div>
   );
