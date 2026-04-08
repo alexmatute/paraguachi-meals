@@ -52,10 +52,7 @@ const PublicPlanViewer = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo />
-            <span className="font-heading text-lg font-bold text-primary">Meal Prep</span>
-          </div>
+          <Logo />
           <div className="flex items-center gap-3">
             <LangSwitcher />
             <Link to="/register"><Button size="sm" className="bg-primary text-primary-foreground text-xs">{t("public.wantPlan")}</Button></Link>

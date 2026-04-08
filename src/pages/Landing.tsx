@@ -58,10 +58,7 @@ const Landing = () => {
     <div className="min-h-screen bg-background">
       <nav className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo />
-            <span className="font-heading text-xl font-bold text-primary">Meal Prep</span>
-          </div>
+          <Logo />
           <div className="flex items-center gap-3">
             <LangSwitcher />
             <Link to="/login">
@@ -188,9 +185,8 @@ const Landing = () => {
 
       <footer className="border-t border-border/50 py-8">
         <div className="container text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
+          <div className="flex justify-center mb-3">
             <Logo />
-            <span className="font-heading text-sm font-bold text-primary">Meal Prep</span>
           </div>
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">{t("footer.credits")}</p>
         </div>
