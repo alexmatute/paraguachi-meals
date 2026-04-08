@@ -148,13 +148,28 @@ const Onboarding = () => {
     { id: "ayuda-comprar", label: t("onboarding.step1.help"), emoji: "🛒" },
   ];
 
-  const dayOptions = [
-    { id: "auto", label: t("onboarding.step7.auto"), emoji: "✨" },
-    { id: "7", label: `7 ${t("onboarding.step7.days")}`, emoji: "📅" },
-    { id: "14", label: `14 ${t("onboarding.step7.days")}`, emoji: "📅" },
-    { id: "21", label: `21 ${t("onboarding.step7.days")}`, emoji: "📅" },
-    { id: "28", label: `28 ${t("onboarding.step7.days")}`, emoji: "📅" },
-  ];
+  // Calculate max days based on subscription end date
+  const maxSubDays = useMemo(() => {
+    if (!subscriptionEnd) return 28;
+    const end = new Date(subscriptionEnd);
+    const now = new Date();
+    const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(1, Math.min(diff, 28));
+  }, [subscriptionEnd]);
+
+  const dayOptions = useMemo(() => {
+    const allOptions = [
+      { id: "auto", label: t("onboarding.step7.auto"), emoji: "✨" },
+      { id: "7", label: `7 ${t("onboarding.step7.days")}`, emoji: "📅" },
+      { id: "14", label: `14 ${t("onboarding.step7.days")}`, emoji: "📅" },
+      { id: "21", label: `21 ${t("onboarding.step7.days")}`, emoji: "📅" },
+      { id: "28", label: `28 ${t("onboarding.step7.days")}`, emoji: "📅" },
+    ];
+    return allOptions.filter(opt => {
+      if (opt.id === "auto") return true;
+      return parseInt(opt.id) <= maxSubDays;
+    });
+  }, [maxSubDays, t]);
 
   const localGoals = goals.map(g => ({ ...g, label: t(`data.goal.${g.id}`) }));
   const localTimes = tiemposCocina.map(tc => ({ ...tc, label: t(`data.time.${tc.id}`) }));
