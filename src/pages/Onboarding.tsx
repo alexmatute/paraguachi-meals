@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,45 @@ import { useI18n } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
 
 const BODY_GOALS = ["perder", "musculo", "mantener", "rendimiento"];
+
+interface FoodCategoryProps {
+  title: string;
+  items: string[];
+  categoryKey: string;
+  selectedFoods: string[];
+  onToggle: (item: string) => void;
+  customValue: string;
+  onCustomChange: (value: string) => void;
+  onCustomAdd: () => void;
+  addOtherLabel: string;
+  addLabel: string;
+}
+
+const FoodCategory = memo(({ title, items, categoryKey, selectedFoods, onToggle, customValue, onCustomChange, onCustomAdd, addOtherLabel, addLabel }: FoodCategoryProps) => (
+  <div className="mb-4">
+    <h4 className="text-sm font-semibold text-primary mb-2">{title}</h4>
+    <div className="flex flex-wrap gap-2">
+      {items.map(item => (
+        <label key={item} className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-1.5 text-xs transition-colors ${selectedFoods.includes(item) ? "bg-primary/20 border-primary text-primary" : "border-border bg-card text-muted-foreground hover:border-primary/50"}`}>
+          <Checkbox checked={selectedFoods.includes(item)} onCheckedChange={() => onToggle(item)} className="h-3 w-3" />
+          {item}
+        </label>
+      ))}
+    </div>
+    <div className="mt-2 flex gap-2">
+      <Input
+        placeholder={`${addOtherLabel}…`}
+        value={customValue}
+        onChange={e => onCustomChange(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onCustomAdd(); } }}
+        className="h-8 text-xs bg-background border-border flex-1"
+      />
+      <Button size="sm" variant="outline" className="h-8 text-xs px-3" onClick={onCustomAdd}>
+        <Plus className="h-3 w-3 mr-1" /> {addLabel}
+      </Button>
+    </div>
+  </div>
+));
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -265,31 +304,13 @@ const Onboarding = () => {
     setCustomInputs(prev => ({ ...prev, [category]: "" }));
   };
 
-  const FoodCategory = ({ title, items, categoryKey }: { title: string; items: string[]; categoryKey: string }) => (
-    <div className="mb-4">
-      <h4 className="text-sm font-semibold text-primary mb-2">{title}</h4>
-      <div className="flex flex-wrap gap-2">
-        {items.map(item => (
-          <label key={item} className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-1.5 text-xs transition-colors ${selectedFoods.includes(item) ? "bg-primary/20 border-primary text-primary" : "border-border bg-card text-muted-foreground hover:border-primary/50"}`}>
-            <Checkbox checked={selectedFoods.includes(item)} onCheckedChange={() => toggleItem(selectedFoods, setSelectedFoods, item)} className="h-3 w-3" />
-            {item}
-          </label>
-        ))}
-      </div>
-      <div className="mt-2 flex gap-2">
-        <Input
-          placeholder={`${t("onboarding.step2.addOther")}…`}
-          value={customInputs[categoryKey] || ""}
-          onChange={e => setCustomInputs(prev => ({ ...prev, [categoryKey]: e.target.value }))}
-          onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustomItem(categoryKey))}
-          className="h-8 text-xs bg-background border-border flex-1"
-        />
-        <Button size="sm" variant="outline" className="h-8 text-xs px-3" onClick={() => addCustomItem(categoryKey)}>
-          <Plus className="h-3 w-3 mr-1" /> {t("onboarding.step2.add")}
-        </Button>
-      </div>
-    </div>
-  );
+  const handleToggleFood = (item: string) => {
+    toggleItem(selectedFoods, setSelectedFoods, item);
+  };
+
+  const handleCustomInputChange = (categoryKey: string, value: string) => {
+    setCustomInputs(prev => ({ ...prev, [categoryKey]: value }));
+  };
 
   const TagToggle = ({ items, selected, setSelected }: { items: string[]; selected: string[]; setSelected: React.Dispatch<React.SetStateAction<string[]>> }) => (
     <div className="flex flex-wrap gap-2">
@@ -397,13 +418,29 @@ const Onboarding = () => {
           {currentStepId === "foods" && (
             <div className="max-h-[60vh] overflow-y-auto pr-2">
               <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step2.title")}</h2>
-              <FoodCategory title={t("onboarding.step2.animalProteins")} items={proteinasAnimales} categoryKey="proteinas" />
-              <FoodCategory title={t("onboarding.step2.plantProteins")} items={proteinasVegetales} categoryKey="protVeg" />
-              <FoodCategory title={t("onboarding.step2.dairy")} items={lacteos} categoryKey="lacteos" />
-              <FoodCategory title={t("onboarding.step2.grains")} items={granos} categoryKey="granos" />
-              <FoodCategory title={t("onboarding.step2.veggies")} items={vegetales} categoryKey="vegetales" />
-              <FoodCategory title={t("onboarding.step2.fruits")} items={frutas} categoryKey="frutas" />
-              <FoodCategory title={t("onboarding.step2.spices")} items={condimentos} categoryKey="condimentos" />
+              {[
+                { title: t("onboarding.step2.animalProteins"), items: proteinasAnimales, key: "proteinas" },
+                { title: t("onboarding.step2.plantProteins"), items: proteinasVegetales, key: "protVeg" },
+                { title: t("onboarding.step2.dairy"), items: lacteos, key: "lacteos" },
+                { title: t("onboarding.step2.grains"), items: granos, key: "granos" },
+                { title: t("onboarding.step2.veggies"), items: vegetales, key: "vegetales" },
+                { title: t("onboarding.step2.fruits"), items: frutas, key: "frutas" },
+                { title: t("onboarding.step2.spices"), items: condimentos, key: "condimentos" },
+              ].map(cat => (
+                <FoodCategory
+                  key={cat.key}
+                  title={cat.title}
+                  items={cat.items}
+                  categoryKey={cat.key}
+                  selectedFoods={selectedFoods}
+                  onToggle={handleToggleFood}
+                  customValue={customInputs[cat.key] || ""}
+                  onCustomChange={(v) => handleCustomInputChange(cat.key, v)}
+                  onCustomAdd={() => addCustomItem(cat.key)}
+                  addOtherLabel={t("onboarding.step2.addOther")}
+                  addLabel={t("onboarding.step2.add")}
+                />
+              ))}
             </div>
           )}
 
