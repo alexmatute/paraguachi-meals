@@ -74,6 +74,9 @@ const translations: Record<Lang, Record<string, string>> = {
     "login.noAccount": "¿No tienes cuenta?",
     "login.register": "Regístrate",
     "login.error": "Error al iniciar sesión: ",
+    "login.forgot": "¿Olvidaste tu contraseña?",
+    "login.forgotSent": "Te enviamos un enlace de recuperación a tu email.",
+    "login.forgotError": "Error al enviar enlace: ",
 
     // Register
     "register.title": "Crear cuenta",
@@ -354,6 +357,9 @@ const translations: Record<Lang, Record<string, string>> = {
     "login.noAccount": "Don't have an account?",
     "login.register": "Sign up",
     "login.error": "Login error: ",
+    "login.forgot": "Forgot your password?",
+    "login.forgotSent": "We sent a recovery link to your email.",
+    "login.forgotError": "Error sending link: ",
 
     // Register
     "register.title": "Create account",

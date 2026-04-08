@@ -16,6 +16,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +27,23 @@ const Login = () => {
       toast.error(t("login.error") + error.message);
     } else {
       navigate("/dashboard");
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error(t("login.email"));
+      return;
+    }
+    setForgotLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setForgotLoading(false);
+    if (error) {
+      toast.error(t("login.forgotError") + error.message);
+    } else {
+      toast.success(t("login.forgotSent"));
     }
   };
 
@@ -49,6 +67,17 @@ const Login = () => {
           <div>
             <Label htmlFor="password">{t("login.password")}</Label>
             <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required className="mt-1 bg-card border-border" />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={forgotLoading}
+              className="text-sm text-primary hover:underline disabled:opacity-50"
+            >
+              {forgotLoading ? <Loader2 className="inline h-3 w-3 animate-spin mr-1" /> : null}
+              {t("login.forgot")}
+            </button>
           </div>
           <Button type="submit" className="w-full bg-primary text-primary-foreground font-semibold" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("login.button")}
