@@ -265,6 +265,12 @@ const translations: Record<Lang, Record<string, string>> = {
     "admin.recipes": "Recetas",
     "admin.aiUsage": "Uso de IA",
     "admin.connections": "Conexiones",
+    "admin.branding": "Marca",
+    "admin.currentLogo": "Logo actual",
+    "admin.noLogo": "Sin logo personalizado",
+    "admin.uploadLogo": "Subir logo",
+    "admin.logoUpdated": "Logo actualizado correctamente",
+    "admin.logoRemoved": "Logo eliminado",
     "admin.exit": "Salir",
 
     // Footer
@@ -539,6 +545,12 @@ const translations: Record<Lang, Record<string, string>> = {
     "admin.recipes": "Recipes",
     "admin.aiUsage": "AI Usage",
     "admin.connections": "Connections",
+    "admin.branding": "Branding",
+    "admin.currentLogo": "Current logo",
+    "admin.noLogo": "No custom logo set",
+    "admin.uploadLogo": "Upload logo",
+    "admin.logoUpdated": "Logo updated successfully",
+    "admin.logoRemoved": "Logo removed",
     "admin.exit": "Exit",
 
     // Footer
