@@ -14,7 +14,127 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      planes: {
+        Row: {
+          creado_en: string | null
+          id: string
+          ingredientes: string | null
+          plan_html: string | null
+          plan_json: Json | null
+          semanas: number | null
+          usuario_id: string
+        }
+        Insert: {
+          creado_en?: string | null
+          id?: string
+          ingredientes?: string | null
+          plan_html?: string | null
+          plan_json?: Json | null
+          semanas?: number | null
+          usuario_id: string
+        }
+        Update: {
+          creado_en?: string | null
+          id?: string
+          ingredientes?: string | null
+          plan_html?: string | null
+          plan_json?: Json | null
+          semanas?: number | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preferencias: {
+        Row: {
+          comidas: string[] | null
+          creado_en: string | null
+          equipamiento: string[] | null
+          id: string
+          nivel_culinario: string | null
+          objetivo: string | null
+          personas: number | null
+          restricciones: string[] | null
+          tiempo_cocina: string | null
+          usuario_id: string
+        }
+        Insert: {
+          comidas?: string[] | null
+          creado_en?: string | null
+          equipamiento?: string[] | null
+          id?: string
+          nivel_culinario?: string | null
+          objetivo?: string | null
+          personas?: number | null
+          restricciones?: string[] | null
+          tiempo_cocina?: string | null
+          usuario_id: string
+        }
+        Update: {
+          comidas?: string[] | null
+          creado_en?: string | null
+          equipamiento?: string[] | null
+          id?: string
+          nivel_culinario?: string | null
+          objetivo?: string | null
+          personas?: number | null
+          restricciones?: string[] | null
+          tiempo_cocina?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preferencias_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          creado_en: string | null
+          email: string | null
+          id: string
+          nombre: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          suscripcion_activa: boolean | null
+          suscripcion_hasta: string | null
+          telegram_id: number | null
+        }
+        Insert: {
+          creado_en?: string | null
+          email?: string | null
+          id: string
+          nombre?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          suscripcion_activa?: boolean | null
+          suscripcion_hasta?: string | null
+          telegram_id?: number | null
+        }
+        Update: {
+          creado_en?: string | null
+          email?: string | null
+          id?: string
+          nombre?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          suscripcion_activa?: boolean | null
+          suscripcion_hasta?: string | null
+          telegram_id?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
