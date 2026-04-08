@@ -102,5 +102,5 @@ export function useAuth() {
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
 
-  return { user, loading, isAdmin, subscribed, subscriptionEnd, checkingSub, checkSubscription };
+  return { user, loading, isAdmin, subscribed, subscriptionEnd, checkingSub, checkSubscription, initialCheckDone };
 }
