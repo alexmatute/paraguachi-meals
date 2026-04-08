@@ -5,6 +5,24 @@ export function useAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+  const [checkingSub, setCheckingSub] = useState(false);
+
+  const checkSubscription = async () => {
+    setCheckingSub(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (!error && data) {
+        setSubscribed(!!data.subscribed);
+        setSubscriptionEnd(data.subscription_end || null);
+      }
+    } catch {
+      // silent
+    } finally {
+      setCheckingSub(false);
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -20,6 +38,8 @@ export function useAuth() {
         setIsAdmin(!!data);
       } else {
         setIsAdmin(false);
+        setSubscribed(false);
+        setSubscriptionEnd(null);
       }
       setLoading(false);
     });
@@ -30,6 +50,7 @@ export function useAuth() {
       if (u) {
         supabase.from("user_roles").select("role").eq("user_id", u.id).eq("role", "admin").maybeSingle()
           .then(({ data }) => setIsAdmin(!!data));
+        checkSubscription();
       }
       setLoading(false);
     });
@@ -37,5 +58,12 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { user, loading, isAdmin };
+  // Periodic subscription check every 60s
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(checkSubscription, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  return { user, loading, isAdmin, subscribed, subscriptionEnd, checkingSub, checkSubscription };
 }
