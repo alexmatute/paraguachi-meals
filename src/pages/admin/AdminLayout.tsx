@@ -21,7 +21,7 @@ const AdminLayout = () => {
     { title: t("admin.dashboard"), url: "/admin", icon: BarChart3 },
     { title: t("admin.users"), url: "/admin/usuarios", icon: Users },
     { title: t("admin.subscriptions"), url: "/admin/suscripciones", icon: CreditCard },
-    { title: t("admin.recipes"), url: "/admin/recetas", icon: ChefHat },
+    { title: t("admin.recipes"), url: "/admin/recetas", icon: Users },
     { title: t("admin.aiUsage"), url: "/admin/ia", icon: Bot },
     { title: t("admin.connections"), url: "/admin/conexiones", icon: Globe },
   ];
