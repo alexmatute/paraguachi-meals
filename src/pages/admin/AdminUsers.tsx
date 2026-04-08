@@ -147,11 +147,44 @@ const AdminUsers = () => {
                   </td>
                   <td className="p-3 text-muted-foreground">{u.email}</td>
                   <td className="p-3">
-                    {u.etiqueta ? (
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${TAG_COLORS[u.etiqueta] || "bg-muted text-muted-foreground"}`}>
-                        {u.etiqueta}
-                      </span>
-                    ) : <span className="text-muted-foreground text-xs">—</span>}
+                    <Select
+                      value={u.etiqueta || "__none__"}
+                      onValueChange={async (v) => {
+                        const etiqueta = v === "__none__" ? null : v;
+                        try {
+                          const { data, error } = await supabase.functions.invoke("admin-users", {
+                            body: { action: "set_tag", user_id: u.id, etiqueta },
+                          });
+                          if (error) throw error;
+                          if (data?.error) throw new Error(data.error);
+                          toast.success(etiqueta ? `Etiqueta "${etiqueta}" asignada` : "Etiqueta removida");
+                          await loadUsers();
+                        } catch (err: any) {
+                          toast.error(err.message || "Error al cambiar etiqueta");
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-7 w-[120px] text-[10px] border-border/50 bg-transparent px-2">
+                        <SelectValue>
+                          {u.etiqueta ? (
+                            <span className={`rounded-full px-1.5 py-0.5 font-semibold ${TAG_COLORS[u.etiqueta] || "bg-muted text-muted-foreground"}`}>
+                              {u.etiqueta}
+                            </span>
+                          ) : <span className="text-muted-foreground">—</span>}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin etiqueta</SelectItem>
+                        {TAGS.map(tag => (
+                          <SelectItem key={tag} value={tag}>
+                            <span className="flex items-center gap-2">
+                              <span className={`inline-block h-2 w-2 rounded-full ${TAG_COLORS[tag]?.split(" ")[0] || "bg-muted"}`} />
+                              {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="p-3">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${u.suscripcion_activa ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
