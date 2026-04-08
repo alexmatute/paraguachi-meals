@@ -40,9 +40,8 @@ const Register = () => {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="flex justify-center mb-4"><LangSwitcher /></div>
-          <Link to="/" className="inline-flex items-center gap-3">
+          <Link to="/" className="inline-block">
             <Logo />
-            <span className="font-heading text-xl font-bold text-primary">Meal Prep</span>
           </Link>
           <h1 className="mt-6 font-heading text-2xl font-bold">{t("register.title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{t("register.subtitle")}</p>
