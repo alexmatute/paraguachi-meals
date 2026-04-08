@@ -58,13 +58,16 @@ function addFooter(doc: jsPDF, page: number, total: number) {
   doc.text(`${page} / ${total}`, w - 15, h - 10, { align: "right" });
 }
 
-export function generatePlanPDF(planData: any, lang: "es" | "en" = "es") {
+export async function generatePlanPDF(planData: any, lang: "es" | "en" = "es") {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
   const t = (es: string, en: string) => (lang === "es" ? es : en);
   const weeks = planData.semanas || [];
   const analysis = planData.analisis;
+
+  // Load logo
+  const logoBase64 = await loadLogoBase64();
 
   // ───── COVER PAGE ─────
   doc.setFillColor(BLACK);
@@ -75,12 +78,13 @@ export function generatePlanPDF(planData: any, lang: "es" | "en" = "es") {
   doc.setFillColor(GREEN);
   doc.rect(0, 0, w, 4, "F");
 
-  // Logo icon (chef hat silhouette via circle)
-  doc.setFillColor(GREEN);
-  doc.circle(w / 2, 75, 18, "F");
-  doc.setFontSize(26);
-  doc.setTextColor(BLACK);
-  doc.text("🍽", w / 2, 80, { align: "center" });
+  // Logo image
+  try {
+    const logoSize = 36;
+    doc.addImage(logoBase64, "PNG", w / 2 - logoSize / 2, 57, logoSize, logoSize);
+  } catch {
+    // silently skip if image fails
+  }
 
   // Title
   doc.setFontSize(32);
