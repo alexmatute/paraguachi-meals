@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Minus, Plus, Upload, Camera, Image, X, Check } from "lucide-react";
 import Logo from "@/components/Logo";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 import {
   proteinasAnimales, proteinasVegetales, lacteos, granos, vegetales, frutas, condimentos,
   goals, alergias, dietas, salud, preferenciasComida, tiemposCocina, equipamiento, mealTimes,
