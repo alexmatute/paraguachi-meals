@@ -20,20 +20,62 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch recipe history for anti-repetition (last 90 days)
+    const diasPlan = dias_solicitados || 28;
+    const semanasNum = Math.ceil(diasPlan / 7);
+    const comidasPorDia = preferencias.comidas?.length || 3;
+    const totalRecetasNeeded = diasPlan * comidasPorDia;
+
+    // ─── SMART RECIPE REUSE ───
+    // 1. Fetch ALL recipes from catalog (not just this user's) for potential reuse
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: historial } = await supabase
+
+    // User's own history (to AVOID repetition for this user)
+    const { data: userHistory } = await supabase
       .from("recetas_catalogo")
-      .select("nombre, tipo_proteina, ingredientes_principales")
+      .select("nombre, tipo_proteina, ingredientes_principales, hash")
       .eq("usuario_id", usuario_id)
       .gte("ultima_vez", ninetyDaysAgo);
 
-    const historialTexto = historial && historial.length > 0
-      ? historial.map((r: any) => `- ${r.nombre} (${r.tipo_proteina})`).join("\n")
+    const userRecipeNames = new Set((userHistory || []).map((r: any) => r.nombre.toLowerCase()));
+
+    // Global catalog: popular recipes from OTHER users that this user hasn't had
+    const { data: globalCatalog } = await supabase
+      .from("recetas_catalogo")
+      .select("nombre, tipo_proteina, ingredientes_principales, objetivo, veces_generada")
+      .neq("usuario_id", usuario_id)
+      .order("veces_generada", { ascending: false })
+      .limit(200);
+
+    // Filter to recipes this user hasn't had in 90 days
+    const reusableCandidates = (globalCatalog || []).filter(
+      (r: any) => !userRecipeNames.has(r.nombre.toLowerCase())
+    );
+
+    // Match by objective and ingredients overlap
+    const userIngredients = (ingredientes || "").toLowerCase().split(/[,;]+/).map((i: string) => i.trim()).filter(Boolean);
+    const scoredCandidates = reusableCandidates.map((r: any) => {
+      let score = 0;
+      if (r.objetivo === preferencias.objetivo) score += 3;
+      const recipeIngredients = (r.ingredientes_principales || []).map((i: string) => i.toLowerCase());
+      const overlap = recipeIngredients.filter((i: string) => userIngredients.some((ui: string) => i.includes(ui) || ui.includes(i)));
+      score += overlap.length * 2;
+      score += Math.min(r.veces_generada || 0, 5); // popularity bonus capped
+      return { ...r, score };
+    }).sort((a: any, b: any) => b.score - a.score);
+
+    // Take up to 30% of needed recipes from cache
+    const maxReuse = Math.floor(totalRecetasNeeded * 0.3);
+    const reusedRecipes = scoredCandidates.slice(0, maxReuse);
+    const reusedNames = reusedRecipes.map((r: any) => r.nombre);
+
+    const historialTexto = userHistory && userHistory.length > 0
+      ? userHistory.map((r: any) => `- ${r.nombre} (${r.tipo_proteina})`).join("\n")
       : "Sin historial previo";
 
-    const diasPlan = dias_solicitados || 28;
-    const semanasNum = Math.ceil(diasPlan / 7);
+    // Build reuse context for the AI
+    const reuseContext = reusedNames.length > 0
+      ? `\nRECETAS PRE-APROBADAS PARA REUTILIZAR (incluye estas tal como están, no las modifiques, úsalas para cubrir hasta ${reusedNames.length} comidas):\n${reusedNames.map((n: string) => `- ${n}`).join("\n")}\nEstas recetas son populares entre otros usuarios y ya están validadas.`
+      : "";
 
     const systemPrompt = `Eres Chef AI de Paraguachi Meals Prep. 
 Genera planes de comida personalizados.
@@ -43,7 +85,9 @@ Responde SIEMPRE en formato JSON válido con esta estructura exacta:
   "analisis": {
     "ingredientes_detectados": ["lista de ingredientes que el usuario tiene"],
     "dias_posibles": ${diasPlan},
-    "recetas_posibles": ${diasPlan * (preferencias.comidas?.length || 3)},
+    "recetas_posibles": ${totalRecetasNeeded},
+    "recetas_reutilizadas": ${reusedNames.length},
+    "ahorro_estimado": "${reusedNames.length > 0 ? Math.round((reusedNames.length / totalRecetasNeeded) * 100) + '% menos tokens usados' : 'N/A'}",
     "ingredientes_sugeridos": [
       {
         "ingrediente": "Nombre del ingrediente",
@@ -71,6 +115,7 @@ Responde SIEMPRE en formato JSON válido con esta estructura exacta:
               "carbohidratos": 45,
               "grasas": 12,
               "tipo_proteina": "pollo|res|cerdo|pescado|vegetariano",
+              "reutilizada": false,
               "ingredientes": [
                 {"cantidad": "200g", "nombre": "pechuga de pollo", "sustituto": "muslo de pollo"}
               ],
@@ -106,6 +151,7 @@ REGLA CRÍTICA ANTI-REPETICIÓN:
 - Cada receta debe ser ÚNICA en nombre y preparación
 - Historial del usuario:
 ${historialTexto}
+${reuseContext}
 
 IMPORTANTE: 
 - Genera exactamente ${semanasNum} semanas con 7 días cada una (${diasPlan} días total)
@@ -115,6 +161,7 @@ IMPORTANTE:
 - Calcula macros realistas
 - Usa los ingredientes disponibles
 - Incluye el análisis de ingredientes
+- Marca "reutilizada": true en recetas que vienen de las PRE-APROBADAS
 - Responde SOLO con el JSON, sin texto adicional`;
 
     const userMessage = `Genera un plan de ${diasPlan} días con estos datos:
@@ -194,7 +241,7 @@ Equipamiento: ${preferencias.equipamiento?.join(', ') || 'Básico'}`;
       throw new Error("Error al guardar el plan");
     }
 
-    // Save recipes to catalog for anti-repetition
+    // Save recipes to catalog for anti-repetition + future reuse
     const recetasToInsert: any[] = [];
     for (const semana of (planJson.semanas || [])) {
       for (const dia of (semana.dias || [])) {
@@ -212,12 +259,26 @@ Equipamiento: ${preferencias.equipamiento?.join(', ') || 'Básico'}`;
       }
     }
 
-    // Upsert recipes (ignore conflicts on hash)
     if (recetasToInsert.length > 0) {
       for (const receta of recetasToInsert) {
-        await supabase
+        // Upsert: if hash exists, increment veces_generada
+        const { data: existing } = await supabase
           .from("recetas_catalogo")
-          .upsert(receta, { onConflict: "hash" });
+          .select("id, veces_generada")
+          .eq("hash", receta.hash)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("recetas_catalogo")
+            .update({
+              veces_generada: (existing.veces_generada || 1) + 1,
+              ultima_vez: new Date().toISOString(),
+            })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("recetas_catalogo").insert(receta);
+        }
       }
     }
 
@@ -235,7 +296,16 @@ Equipamiento: ${preferencias.equipamiento?.join(', ') || 'Básico'}`;
       });
     }
 
-    return new Response(JSON.stringify({ plan_id: plan.id, plan: planJson, public_token: publicToken }), {
+    return new Response(JSON.stringify({
+      plan_id: plan.id,
+      plan: planJson,
+      public_token: publicToken,
+      reuse_stats: {
+        recipes_reused: reusedNames.length,
+        total_recipes: totalRecetasNeeded,
+        savings_pct: reusedNames.length > 0 ? Math.round((reusedNames.length / totalRecetasNeeded) * 100) : 0,
+      },
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
