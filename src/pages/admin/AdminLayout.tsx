@@ -30,7 +30,7 @@ const AdminLayout = () => {
         <Sidebar collapsible="icon" className="border-r border-border">
           <SidebarContent>
             <div className="p-4 flex items-center gap-2">
-              <Logo size={24} />
+              <Logo size={36} />
               <span className="font-heading text-sm font-bold text-primary truncate">Admin CRM</span>
             </div>
             <SidebarGroup>

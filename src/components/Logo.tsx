@@ -7,13 +7,13 @@ interface LogoProps {
   size?: number;
 }
 
-const Logo = ({ className = "", size = 28 }: LogoProps) => {
+const Logo = ({ className = "", size = 40 }: LogoProps) => {
   const { value: logoUrl } = useSiteSetting("logo_url");
 
   return (
     <img
       src={logoUrl || fallbackLogo}
-      alt="Paraguachi"
+      alt="Meal Prep"
       className={cn("shrink-0", className)}
       style={{ width: size, height: size, objectFit: "contain" }}
     />

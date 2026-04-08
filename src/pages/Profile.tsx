@@ -86,7 +86,7 @@ const Profile = () => {
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/dashboard")} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></button>
-            <Logo size={24} />
+            <Logo size={36} />
             <span className="font-heading text-lg font-bold text-primary">{t("profile.title")}</span>
           </div>
           <LangSwitcher />
