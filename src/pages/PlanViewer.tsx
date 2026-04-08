@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ChefHat, Clock, Flame, Loader2, ArrowLeft, ShoppingCart, BookOpen } from "lucide-react";
+import { ChefHat, Clock, Flame, Loader2, ArrowLeft, ShoppingCart, BookOpen, Download, Share2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const proteinColors: Record<string, string> = {
   pollo: "bg-primary/20 text-primary",
@@ -16,26 +18,46 @@ const PlanViewer = () => {
   const { id } = useParams();
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("planes")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const { data } = await supabase.from("planes").select("*").eq("id", id).single();
       setPlan(data);
       setLoading(false);
     };
     if (id) load();
   }, [id]);
 
+  const handleExportHTML = async () => {
+    setExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-html", { body: { plan_id: id } });
+      if (error) throw error;
+      const blob = new Blob([data.html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `plan-paraguachi-${(id || "").substring(0, 8)}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("HTML descargado");
+    } catch {
+      toast.error("Error al exportar");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleShare = () => {
+    if (!plan?.public_token) return;
+    const url = `${window.location.origin}/ver-plan/${plan.public_token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Enlace copiado al portapapeles");
+  };
+
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   if (!plan?.plan_json) {
@@ -52,28 +74,70 @@ const PlanViewer = () => {
 
   const planData = plan.plan_json;
   const weeks = planData.semanas || [];
+  const analysis = planData.analisis;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
+            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
             <div className="flex items-center gap-2">
               <ChefHat className="h-6 w-6 text-primary" />
               <span className="font-heading text-lg font-bold text-primary">Plan de comidas</span>
             </div>
           </div>
-          <span className="text-xs text-muted-foreground">
-            {new Date(plan.creado_en).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })}
-          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportHTML} disabled={exporting} className="gap-1 border-border text-xs">
+              {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} HTML
+            </Button>
+            {plan.public_token && (
+              <Button variant="outline" size="sm" onClick={handleShare} className="gap-1 border-border text-xs">
+                <Share2 className="h-3 w-3" /> Compartir
+              </Button>
+            )}
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              {new Date(plan.creado_en).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })}
+            </span>
+          </div>
         </div>
       </header>
 
       <main className="container py-6">
+        {/* Analysis card */}
+        {analysis && (
+          <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="card-surface p-4 border-primary/30">
+              <p className="text-xs text-muted-foreground">Ingredientes detectados</p>
+              <p className="font-heading text-lg font-bold text-primary">{analysis.ingredientes_detectados?.length || 0}</p>
+            </div>
+            <div className="card-surface p-4">
+              <p className="text-xs text-muted-foreground">Recetas generadas</p>
+              <p className="font-heading text-lg font-bold">{analysis.recetas_posibles || "—"}</p>
+            </div>
+            {analysis.advertencias?.length > 0 && (
+              <div className="card-surface p-4 border-secondary/30">
+                <p className="text-xs text-secondary font-medium mb-1">⚠️ Advertencias</p>
+                {analysis.advertencias.map((a: string, i: number) => <p key={i} className="text-xs text-muted-foreground">{a}</p>)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Ingredient suggestions */}
+        {analysis?.ingredientes_sugeridos?.length > 0 && (
+          <div className="mb-6 card-surface p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2 mb-2">💡 Sugerencias para más variedad</h3>
+            <div className="flex flex-wrap gap-2">
+              {analysis.ingredientes_sugeridos.map((s: any, i: number) => (
+                <span key={i} className="rounded-full border border-secondary/30 bg-secondary/10 px-3 py-1 text-xs text-secondary" title={s.razon}>
+                  {s.ingrediente} (+{s.recetas_adicionales} recetas)
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <Tabs defaultValue="1">
           <TabsList className="mb-6 bg-card border border-border">
             {weeks.map((_: any, i: number) => (
@@ -85,7 +149,6 @@ const PlanViewer = () => {
 
           {weeks.map((week: any, wi: number) => (
             <TabsContent key={wi} value={String(wi + 1)}>
-              {/* Recipe cards */}
               <div className="space-y-6">
                 {(week.dias || []).map((day: any, di: number) => (
                   <div key={di}>
@@ -103,22 +166,19 @@ const PlanViewer = () => {
                             </span>
                           </div>
                           <div className="flex gap-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{meal.tiempo_prep + (meal.tiempo_coccion || 0)} min</span>
+                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{(meal.tiempo_prep || 0) + (meal.tiempo_coccion || 0)} min</span>
                             <span className="flex items-center gap-1"><Flame className="h-3 w-3" />{meal.calorias} kcal</span>
                           </div>
-                          {/* Macros */}
                           <div className="grid grid-cols-3 gap-2 text-center">
                             <div className="rounded-md bg-muted/50 py-1"><p className="text-[10px] text-muted-foreground">Prot</p><p className="text-xs font-semibold">{meal.proteinas}g</p></div>
                             <div className="rounded-md bg-muted/50 py-1"><p className="text-[10px] text-muted-foreground">Carbs</p><p className="text-xs font-semibold">{meal.carbohidratos}g</p></div>
                             <div className="rounded-md bg-muted/50 py-1"><p className="text-[10px] text-muted-foreground">Grasas</p><p className="text-xs font-semibold">{meal.grasas}g</p></div>
                           </div>
-                          {/* Ingredients */}
                           <div className="flex flex-wrap gap-1">
                             {(meal.ingredientes || []).map((ing: any, ii: number) => (
                               <span key={ii} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{ing.cantidad} {ing.nombre}</span>
                             ))}
                           </div>
-                          {/* Steps */}
                           <details className="group">
                             <summary className="text-xs text-primary cursor-pointer font-medium">Ver pasos</summary>
                             <ol className="mt-2 space-y-1.5">
@@ -130,7 +190,6 @@ const PlanViewer = () => {
                               ))}
                             </ol>
                           </details>
-                          {/* Storage */}
                           {meal.almacenamiento && (
                             <p className="text-[10px] text-muted-foreground italic">💡 {meal.almacenamiento.meal_prep || meal.almacenamiento.refrigerador}</p>
                           )}
@@ -141,7 +200,6 @@ const PlanViewer = () => {
                 ))}
               </div>
 
-              {/* Shopping List */}
               {week.lista_compras && (
                 <div className="mt-8 card-surface p-6">
                   <h3 className="font-heading text-base font-bold mb-4 flex items-center gap-2">
@@ -162,7 +220,6 @@ const PlanViewer = () => {
                 </div>
               )}
 
-              {/* Meal Prep Guide */}
               {week.guia_meal_prep && (
                 <div className="mt-4 card-surface p-6">
                   <h3 className="font-heading text-base font-bold mb-2 flex items-center gap-2">
@@ -175,6 +232,15 @@ const PlanViewer = () => {
           ))}
         </Tabs>
       </main>
+
+      <footer className="border-t border-border/50 py-6 mt-8">
+        <div className="container text-center">
+          <p className="text-[11px] text-muted-foreground">
+            Paraguachi Meals Prep · Ing. Chef Alexander Matute & Ing. Nelly Rendón, Especialista en Manipulación y Conservación de Alimentos · Los Angeles, CA
+          </p>
+          <Link to="/dashboard" className="mt-2 inline-block text-xs text-primary hover:underline">← Volver al dashboard</Link>
+        </div>
+      </footer>
     </div>
   );
 };
