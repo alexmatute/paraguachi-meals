@@ -13,8 +13,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
 /** Requires active subscription. Redirects to /checkout if not subscribed. Admins bypass. */
 export function RequireSubscription({ children }: { children: ReactNode }) {
-  const { user, loading, subscribed, checkingSub, isAdmin } = useAuth();
-  if (loading || checkingSub) return <LoadingScreen />;
+  const { user, loading, subscribed, checkingSub, isAdmin, initialCheckDone } = useAuth();
+  if (loading || (!initialCheckDone && checkingSub)) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (isAdmin) return <>{children}</>;
   if (!subscribed) return <Navigate to="/checkout" replace />;

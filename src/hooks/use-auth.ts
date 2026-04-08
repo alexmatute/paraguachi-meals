@@ -10,16 +10,17 @@ export function useAuth() {
   const [subscribed, setSubscribed] = useState(false);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [checkingSub, setCheckingSub] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
-  const checkSubscription = useCallback(async () => {
+  const checkSubscription = useCallback(async (isBackground = false) => {
     if (!user) {
       setSubscribed(false);
       setSubscriptionEnd(null);
-      setCheckingSub(false);
+      if (!isBackground) setCheckingSub(false);
       return;
     }
 
-    setCheckingSub(true);
+    if (!isBackground) setCheckingSub(true);
     try {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (!error && data) {
@@ -30,7 +31,7 @@ export function useAuth() {
       setSubscribed(false);
       setSubscriptionEnd(null);
     } finally {
-      setCheckingSub(false);
+      if (!isBackground) setCheckingSub(false);
     }
   }, [user]);
 
@@ -75,6 +76,7 @@ export function useAuth() {
     } finally {
       setLoading(false);
       setCheckingSub(false);
+      setInitialCheckDone(true);
     }
   }, []);
 
@@ -95,10 +97,10 @@ export function useAuth() {
   useEffect(() => {
     if (!user) return;
     const interval = setInterval(() => {
-      void checkSubscription();
+      void checkSubscription(true);
     }, 60000);
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
 
-  return { user, loading, isAdmin, subscribed, subscriptionEnd, checkingSub, checkSubscription };
+  return { user, loading, isAdmin, subscribed, subscriptionEnd, checkingSub, checkSubscription, initialCheckDone };
 }
