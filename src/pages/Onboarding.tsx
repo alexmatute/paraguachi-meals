@@ -265,31 +265,13 @@ const Onboarding = () => {
     setCustomInputs(prev => ({ ...prev, [category]: "" }));
   };
 
-  const FoodCategory = ({ title, items, categoryKey }: { title: string; items: string[]; categoryKey: string }) => (
-    <div className="mb-4">
-      <h4 className="text-sm font-semibold text-primary mb-2">{title}</h4>
-      <div className="flex flex-wrap gap-2">
-        {items.map(item => (
-          <label key={item} className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-1.5 text-xs transition-colors ${selectedFoods.includes(item) ? "bg-primary/20 border-primary text-primary" : "border-border bg-card text-muted-foreground hover:border-primary/50"}`}>
-            <Checkbox checked={selectedFoods.includes(item)} onCheckedChange={() => toggleItem(selectedFoods, setSelectedFoods, item)} className="h-3 w-3" />
-            {item}
-          </label>
-        ))}
-      </div>
-      <div className="mt-2 flex gap-2">
-        <Input
-          placeholder={`${t("onboarding.step2.addOther")}…`}
-          value={customInputs[categoryKey] || ""}
-          onChange={e => setCustomInputs(prev => ({ ...prev, [categoryKey]: e.target.value }))}
-          onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustomItem(categoryKey))}
-          className="h-8 text-xs bg-background border-border flex-1"
-        />
-        <Button size="sm" variant="outline" className="h-8 text-xs px-3" onClick={() => addCustomItem(categoryKey)}>
-          <Plus className="h-3 w-3 mr-1" /> {t("onboarding.step2.add")}
-        </Button>
-      </div>
-    </div>
-  );
+  const handleToggleFood = (item: string) => {
+    toggleItem(selectedFoods, setSelectedFoods, item);
+  };
+
+  const handleCustomInputChange = (categoryKey: string, value: string) => {
+    setCustomInputs(prev => ({ ...prev, [categoryKey]: value }));
+  };
 
   const TagToggle = ({ items, selected, setSelected }: { items: string[]; selected: string[]; setSelected: React.Dispatch<React.SetStateAction<string[]>> }) => (
     <div className="flex flex-wrap gap-2">
