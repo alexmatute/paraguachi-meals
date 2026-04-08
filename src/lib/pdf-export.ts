@@ -1,0 +1,372 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+const BLACK = "#000000";
+const SURFACE = "#111111";
+const GREEN = "#7EC850";
+const AMBER = "#E8A830";
+const WHITE = "#F2F2F2";
+const GRAY = "#888888";
+const WATERMARK = "@paraguachicuisine";
+
+function addWatermark(doc: jsPDF) {
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+  doc.saveGraphicsState();
+  doc.setGState(new (doc as any).GState({ opacity: 0.06 }));
+  doc.setFontSize(54);
+  doc.setTextColor(GREEN);
+  doc.text(WATERMARK, w / 2, h / 2, { align: "center", angle: 35 });
+  doc.restoreGraphicsState();
+}
+
+function addFooter(doc: jsPDF, page: number, total: number) {
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+  doc.setFontSize(7);
+  doc.setTextColor(GRAY);
+  doc.text("Paraguachi Meals Prep · Ing. Chef Alexander Matute & Ing. Nelly Rendón · Los Angeles, CA", w / 2, h - 10, { align: "center" });
+  doc.text(`${page} / ${total}`, w - 15, h - 10, { align: "right" });
+}
+
+export function generatePlanPDF(planData: any, lang: "es" | "en" = "es") {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+  const t = (es: string, en: string) => (lang === "es" ? es : en);
+  const weeks = planData.semanas || [];
+  const analysis = planData.analisis;
+
+  // ───── COVER PAGE ─────
+  doc.setFillColor(BLACK);
+  doc.rect(0, 0, w, h, "F");
+  addWatermark(doc);
+
+  // Green accent bar
+  doc.setFillColor(GREEN);
+  doc.rect(0, 0, w, 4, "F");
+
+  // Logo icon (chef hat silhouette via circle)
+  doc.setFillColor(GREEN);
+  doc.circle(w / 2, 75, 18, "F");
+  doc.setFontSize(26);
+  doc.setTextColor(BLACK);
+  doc.text("🍽", w / 2, 80, { align: "center" });
+
+  // Title
+  doc.setFontSize(32);
+  doc.setTextColor(GREEN);
+  doc.text("PARAGUACHI", w / 2, 115, { align: "center" });
+  doc.setFontSize(18);
+  doc.setTextColor(WHITE);
+  doc.text("MEALS PREP", w / 2, 126, { align: "center" });
+
+  // Subtitle
+  doc.setFontSize(11);
+  doc.setTextColor(GRAY);
+  doc.text(t("Tu plan de comidas personalizado", "Your personalized meal plan"), w / 2, 145, { align: "center" });
+
+  // Stats box
+  const totalRecipes = weeks.reduce((acc: number, wk: any) => acc + (wk.dias || []).reduce((a2: number, d: any) => a2 + (d.comidas || []).length, 0), 0);
+  const totalDays = weeks.reduce((acc: number, wk: any) => acc + (wk.dias || []).length, 0);
+
+  const boxY = 165;
+  doc.setFillColor(SURFACE);
+  doc.roundedRect(30, boxY, w - 60, 40, 4, 4, "F");
+  doc.setFontSize(22);
+  doc.setTextColor(GREEN);
+  doc.text(String(weeks.length), 55, boxY + 18, { align: "center" });
+  doc.text(String(totalDays), w / 2, boxY + 18, { align: "center" });
+  doc.text(String(totalRecipes), w - 55, boxY + 18, { align: "center" });
+  doc.setFontSize(8);
+  doc.setTextColor(GRAY);
+  doc.text(t("Semanas", "Weeks"), 55, boxY + 27, { align: "center" });
+  doc.text(t("Días", "Days"), w / 2, boxY + 27, { align: "center" });
+  doc.text(t("Recetas", "Recipes"), w - 55, boxY + 27, { align: "center" });
+
+  // Credits
+  doc.setFontSize(8);
+  doc.setTextColor(GRAY);
+  doc.text("Ing. Chef Alexander Matute & Ing. Nelly Rendón", w / 2, h - 30, { align: "center" });
+  doc.text(t("Especialista en Manipulación y Conservación de Alimentos", "Food Handling & Preservation Specialist"), w / 2, h - 24, { align: "center" });
+  doc.text("Los Angeles, CA", w / 2, h - 18, { align: "center" });
+
+  // Bottom accent bar
+  doc.setFillColor(GREEN);
+  doc.rect(0, h - 4, w, 4, "F");
+
+  // ───── TABLE OF CONTENTS ─────
+  doc.addPage();
+  doc.setFillColor(BLACK);
+  doc.rect(0, 0, w, h, "F");
+  addWatermark(doc);
+
+  doc.setFillColor(GREEN);
+  doc.rect(0, 0, w, 2, "F");
+
+  doc.setFontSize(20);
+  doc.setTextColor(GREEN);
+  doc.text(t("TABLA DE CONTENIDO", "TABLE OF CONTENTS"), 15, 25);
+
+  doc.setDrawColor(GREEN);
+  doc.setLineWidth(0.3);
+  doc.line(15, 30, w - 15, 30);
+
+  let tocY = 42;
+  doc.setFontSize(10);
+  const tocItems: string[] = [];
+
+  weeks.forEach((_: any, i: number) => {
+    const label = `${t("Semana", "Week")} ${i + 1}`;
+    tocItems.push(label);
+    doc.setTextColor(WHITE);
+    doc.text(`${i + 1}.`, 20, tocY);
+    doc.text(label, 30, tocY);
+    doc.setTextColor(GRAY);
+    const dots = ".".repeat(80);
+    doc.text(dots, 70, tocY);
+    tocY += 8;
+  });
+
+  tocItems.push(t("Resumen Nutricional", "Nutritional Summary"));
+  doc.setTextColor(WHITE);
+  doc.text(`${weeks.length + 1}.`, 20, tocY);
+  doc.text(t("Resumen Nutricional", "Nutritional Summary"), 30, tocY);
+  tocY += 8;
+
+  tocItems.push(t("Listas de Compras", "Shopping Lists"));
+  doc.setTextColor(WHITE);
+  doc.text(`${weeks.length + 2}.`, 20, tocY);
+  doc.text(t("Listas de Compras", "Shopping Lists"), 30, tocY);
+
+  // ───── WEEKLY RECIPE PAGES ─────
+  weeks.forEach((week: any, wi: number) => {
+    doc.addPage();
+    doc.setFillColor(BLACK);
+    doc.rect(0, 0, w, h, "F");
+    addWatermark(doc);
+
+    // Week header
+    doc.setFillColor(GREEN);
+    doc.rect(0, 0, w, 18, "F");
+    doc.setFontSize(14);
+    doc.setTextColor(BLACK);
+    doc.text(`${t("SEMANA", "WEEK")} ${wi + 1}`, w / 2, 12, { align: "center" });
+
+    let curY = 28;
+    const days = week.dias || [];
+
+    days.forEach((day: any, di: number) => {
+      if (curY > h - 40) {
+        doc.addPage();
+        doc.setFillColor(BLACK);
+        doc.rect(0, 0, w, h, "F");
+        addWatermark(doc);
+        curY = 15;
+      }
+
+      // Day header
+      doc.setFillColor(SURFACE);
+      doc.roundedRect(10, curY, w - 20, 8, 2, 2, "F");
+      doc.setFontSize(9);
+      doc.setTextColor(GREEN);
+      doc.text(`${t("Día", "Day")} ${day.numero || di + 1}`, 15, curY + 6);
+      curY += 12;
+
+      const meals = day.comidas || [];
+      meals.forEach((meal: any) => {
+        if (curY > h - 55) {
+          doc.addPage();
+          doc.setFillColor(BLACK);
+          doc.rect(0, 0, w, h, "F");
+          addWatermark(doc);
+          curY = 15;
+        }
+
+        // Meal card
+        doc.setFillColor("#1A1A1A");
+        doc.roundedRect(12, curY, w - 24, 38, 3, 3, "F");
+
+        // Meal type + name
+        doc.setFontSize(7);
+        doc.setTextColor(GRAY);
+        doc.text((meal.tipo || "").toUpperCase(), 16, curY + 6);
+        doc.setFontSize(10);
+        doc.setTextColor(WHITE);
+        doc.text(meal.nombre || "", 16, curY + 13);
+
+        // Protein badge
+        doc.setFontSize(7);
+        doc.setTextColor(AMBER);
+        doc.text(meal.tipo_proteina || "", w - 18, curY + 6, { align: "right" });
+
+        // Time + Calories
+        doc.setFontSize(7);
+        doc.setTextColor(GRAY);
+        const time = (meal.tiempo_prep || 0) + (meal.tiempo_coccion || 0);
+        doc.text(`⏱ ${time} min  •  🔥 ${meal.calorias || 0} kcal`, 16, curY + 20);
+
+        // Macros
+        doc.setFontSize(7);
+        doc.setTextColor(GREEN);
+        doc.text(`P: ${meal.proteinas || 0}g`, 16, curY + 27);
+        doc.setTextColor(AMBER);
+        doc.text(`C: ${meal.carbohidratos || 0}g`, 45, curY + 27);
+        doc.setTextColor(WHITE);
+        doc.text(`G: ${meal.grasas || 0}g`, 74, curY + 27);
+
+        // Ingredients (compact)
+        const ings = (meal.ingredientes || []).map((i: any) => `${i.cantidad || ""} ${i.nombre || ""}`).join(" · ");
+        doc.setFontSize(6);
+        doc.setTextColor(GRAY);
+        const ingLines = doc.splitTextToSize(ings, w - 34);
+        doc.text(ingLines.slice(0, 2), 16, curY + 34);
+
+        curY += 42;
+      });
+
+      curY += 4;
+    });
+  });
+
+  // ───── NUTRITIONAL SUMMARY ─────
+  doc.addPage();
+  doc.setFillColor(BLACK);
+  doc.rect(0, 0, w, h, "F");
+  addWatermark(doc);
+
+  doc.setFillColor(GREEN);
+  doc.rect(0, 0, w, 2, "F");
+  doc.setFontSize(18);
+  doc.setTextColor(GREEN);
+  doc.text(t("RESUMEN NUTRICIONAL", "NUTRITIONAL SUMMARY"), 15, 22);
+
+  // Build nutrition table data
+  const nutritionRows: any[] = [];
+  weeks.forEach((week: any, wi: number) => {
+    (week.dias || []).forEach((day: any) => {
+      (day.comidas || []).forEach((meal: any) => {
+        nutritionRows.push([
+          `S${wi + 1} D${day.numero || ""}`,
+          meal.nombre || "",
+          meal.calorias || 0,
+          `${meal.proteinas || 0}g`,
+          `${meal.carbohidratos || 0}g`,
+          `${meal.grasas || 0}g`,
+        ]);
+      });
+    });
+  });
+
+  // Totals
+  const totals = nutritionRows.reduce(
+    (acc, r) => ({
+      cal: acc.cal + (Number(r[2]) || 0),
+      p: acc.p + (parseInt(r[3]) || 0),
+      c: acc.c + (parseInt(r[4]) || 0),
+      g: acc.g + (parseInt(r[5]) || 0),
+    }),
+    { cal: 0, p: 0, c: 0, g: 0 }
+  );
+  const avg = nutritionRows.length > 0
+    ? { cal: Math.round(totals.cal / nutritionRows.length), p: Math.round(totals.p / nutritionRows.length), c: Math.round(totals.c / nutritionRows.length), g: Math.round(totals.g / nutritionRows.length) }
+    : { cal: 0, p: 0, c: 0, g: 0 };
+
+  // Summary boxes
+  const sumY = 32;
+  const boxW = (w - 40) / 4;
+  const summaryItems = [
+    { label: t("Calorías promedio", "Avg Calories"), value: `${avg.cal} kcal`, color: GREEN },
+    { label: t("Proteína promedio", "Avg Protein"), value: `${avg.p}g`, color: GREEN },
+    { label: t("Carbs promedio", "Avg Carbs"), value: `${avg.c}g`, color: AMBER },
+    { label: t("Grasa promedio", "Avg Fat"), value: `${avg.g}g`, color: WHITE },
+  ];
+
+  summaryItems.forEach((item, i) => {
+    const x = 10 + i * (boxW + 7);
+    doc.setFillColor(SURFACE);
+    doc.roundedRect(x, sumY, boxW, 22, 3, 3, "F");
+    doc.setFontSize(14);
+    doc.setTextColor(item.color);
+    doc.text(item.value, x + boxW / 2, sumY + 10, { align: "center" });
+    doc.setFontSize(7);
+    doc.setTextColor(GRAY);
+    doc.text(item.label, x + boxW / 2, sumY + 18, { align: "center" });
+  });
+
+  // Table
+  autoTable(doc, {
+    startY: 62,
+    head: [[t("Ref", "Ref"), t("Receta", "Recipe"), "Kcal", t("Prot", "Prot"), "Carbs", t("Grasa", "Fat")]],
+    body: nutritionRows.slice(0, 80), // Limit to prevent overflow
+    styles: {
+      fillColor: [17, 17, 17],
+      textColor: [200, 200, 200],
+      fontSize: 7,
+      cellPadding: 2,
+      lineColor: [40, 40, 40],
+      lineWidth: 0.2,
+    },
+    headStyles: {
+      fillColor: [126, 200, 80],
+      textColor: [0, 0, 0],
+      fontStyle: "bold",
+      fontSize: 7,
+    },
+    alternateRowStyles: { fillColor: [25, 25, 25] },
+    theme: "grid",
+  });
+
+  // ───── SHOPPING LISTS ─────
+  weeks.forEach((week: any, wi: number) => {
+    if (!week.lista_compras) return;
+    doc.addPage();
+    doc.setFillColor(BLACK);
+    doc.rect(0, 0, w, h, "F");
+    addWatermark(doc);
+
+    doc.setFillColor(GREEN);
+    doc.rect(0, 0, w, 14, "F");
+    doc.setFontSize(11);
+    doc.setTextColor(BLACK);
+    doc.text(`${t("LISTA DE COMPRAS", "SHOPPING LIST")} — ${t("Semana", "Week")} ${wi + 1}`, w / 2, 10, { align: "center" });
+
+    let ly = 24;
+    Object.entries(week.lista_compras).forEach(([cat, items]: [string, any]) => {
+      if (ly > h - 30) {
+        doc.addPage();
+        doc.setFillColor(BLACK);
+        doc.rect(0, 0, w, h, "F");
+        addWatermark(doc);
+        ly = 15;
+      }
+      doc.setFontSize(9);
+      doc.setTextColor(GREEN);
+      doc.text(cat.toUpperCase(), 15, ly);
+      ly += 5;
+      doc.setFontSize(7);
+      doc.setTextColor(WHITE);
+      (items || []).forEach((item: string) => {
+        if (ly > h - 15) {
+          doc.addPage();
+          doc.setFillColor(BLACK);
+          doc.rect(0, 0, w, h, "F");
+          addWatermark(doc);
+          ly = 15;
+        }
+        doc.text(`☐  ${item}`, 20, ly);
+        ly += 5;
+      });
+      ly += 3;
+    });
+  });
+
+  // ───── ADD FOOTERS TO ALL PAGES ─────
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    addFooter(doc, i, totalPages);
+  }
+
+  return doc;
+}
