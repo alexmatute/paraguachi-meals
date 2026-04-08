@@ -61,7 +61,7 @@ const PlanViewer = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <Logo size={48} className="mx-auto opacity-50" />
+          <Logo className="mx-auto opacity-50" />
           <h2 className="mt-4 font-heading text-xl font-bold">{t("plan.notFound")}</h2>
           <Link to="/dashboard" className="mt-4 inline-block text-sm text-primary hover:underline">{t("plan.backDashboard")}</Link>
         </div>
@@ -80,7 +80,7 @@ const PlanViewer = () => {
           <div className="flex items-center gap-3">
             <Link to="/dashboard" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
             <div className="flex items-center gap-2">
-              <Logo size={24} />
+              <Logo />
               <span className="font-heading text-lg font-bold text-primary">{t("plan.title")}</span>
             </div>
           </div>

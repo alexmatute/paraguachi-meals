@@ -38,7 +38,7 @@ const PublicPlanViewer = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <Logo size={48} className="mx-auto opacity-50" />
+          <Logo className="mx-auto opacity-50" />
           <h2 className="mt-4 font-heading text-xl font-bold">{t("public.expired")}</h2>
           <Link to="/" className="mt-4 inline-block text-sm text-primary hover:underline">{t("public.wantMyPlan")}</Link>
         </div>
@@ -53,7 +53,7 @@ const PublicPlanViewer = () => {
       <header className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Logo size={40} />
+            <Logo />
             <span className="font-heading text-lg font-bold text-primary">Meal Prep</span>
           </div>
           <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ const PublicPlanViewer = () => {
         </Tabs>
 
         <div className="mt-12 card-surface p-8 text-center border-primary/30">
-          <Logo size={40} className="mx-auto" />
+          <Logo className="mx-auto" />
           <h2 className="mt-3 font-heading text-xl font-bold">{t("public.ctaTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">{t("public.ctaDesc")}</p>
           <Link to="/register"><Button className="mt-4 bg-primary text-primary-foreground font-semibold">{t("public.ctaButton")}</Button></Link>

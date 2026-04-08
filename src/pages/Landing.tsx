@@ -59,7 +59,7 @@ const Landing = () => {
       <nav className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Logo size={48} />
+            <Logo />
             <span className="font-heading text-xl font-bold text-primary">Meal Prep</span>
           </div>
           <div className="flex items-center gap-3">
@@ -189,7 +189,7 @@ const Landing = () => {
       <footer className="border-t border-border/50 py-8">
         <div className="container text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Logo size={28} />
+            <Logo />
             <span className="font-heading text-sm font-bold text-primary">Meal Prep</span>
           </div>
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">{t("footer.credits")}</p>

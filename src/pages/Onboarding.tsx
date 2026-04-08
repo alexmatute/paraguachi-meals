@@ -188,7 +188,7 @@ const Onboarding = () => {
       <div className="mx-auto max-w-2xl">
         <div className="mb-8 text-center">
           <div className="flex justify-center mb-4"><LangSwitcher /></div>
-          <Logo size={32} className="mx-auto" />
+          <Logo className="mx-auto" />
           <h1 className="mt-2 font-heading text-xl font-bold">{t("onboarding.title")}</h1>
         </div>
 
