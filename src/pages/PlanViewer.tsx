@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ChefHat, Clock, Flame, Loader2, ArrowLeft, ShoppingCart, BookOpen, Download, Share2 } from "lucide-react";
+import { ChefHat, Clock, Flame, Loader2, ArrowLeft, ShoppingCart, BookOpen, Download, Share2, FileText } from "lucide-react";
+import { generatePlanPDF } from "@/lib/pdf-export";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ const PlanViewer = () => {
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const locale = lang === "es" ? "es-ES" : "en-US";
 
   useEffect(() => {
@@ -85,6 +87,18 @@ const PlanViewer = () => {
             <LangSwitcher />
             <Button variant="outline" size="sm" onClick={handleExportHTML} disabled={exporting} className="gap-1 border-border text-xs">
               {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} HTML
+            </Button>
+            <Button variant="outline" size="sm" disabled={exportingPdf} className="gap-1 border-border text-xs"
+              onClick={() => {
+                setExportingPdf(true);
+                try {
+                  const pdf = generatePlanPDF(planData, lang);
+                  pdf.save(`plan-paraguachi-${(id || "").substring(0, 8)}.pdf`);
+                  toast.success(t("plan.pdfDownloaded"));
+                } catch { toast.error(t("plan.pdfError")); }
+                finally { setExportingPdf(false); }
+              }}>
+              {exportingPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />} PDF
             </Button>
             {plan.public_token && (
               <Button variant="outline" size="sm" onClick={handleShare} className="gap-1 border-border text-xs"><Share2 className="h-3 w-3" /> {t("common.share")}</Button>

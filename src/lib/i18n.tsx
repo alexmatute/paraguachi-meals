@@ -202,6 +202,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "plan.warnings": "⚠️ Advertencias",
     "plan.suggestions": "💡 Sugerencias para más variedad",
     "plan.additionalRecipes": "recetas",
+    "plan.pdfDownloaded": "PDF descargado",
+    "plan.pdfError": "Error al generar PDF",
 
     // Public Plan
     "public.shared": "Plan compartido",
@@ -474,6 +476,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "plan.warnings": "⚠️ Warnings",
     "plan.suggestions": "💡 Suggestions for more variety",
     "plan.additionalRecipes": "recipes",
+    "plan.pdfDownloaded": "PDF downloaded",
+    "plan.pdfError": "Error generating PDF",
 
     // Public Plan
     "public.shared": "Shared plan",
