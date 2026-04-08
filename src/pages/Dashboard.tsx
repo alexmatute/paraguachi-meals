@@ -84,7 +84,7 @@ const Dashboard = () => {
       <header className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Logo size={40} />
+            <Logo />
             <span className="font-heading text-lg font-bold text-primary">Meal Prep</span>
           </div>
           <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ const Dashboard = () => {
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : plans.length === 0 ? (
           <div className="card-surface p-12 text-center">
-            <Logo size={48} className="mx-auto opacity-50" />
+            <Logo className="mx-auto opacity-50" />
             <h3 className="mt-4 font-heading text-lg font-semibold">{t("dashboard.noPlans")}</h3>
             <p className="mt-2 text-sm text-muted-foreground">{t("dashboard.noPlansDesc")}</p>
             <Link to="/onboarding" className="block mt-6"><Button className="bg-primary text-primary-foreground font-semibold">{t("dashboard.start")}</Button></Link>
