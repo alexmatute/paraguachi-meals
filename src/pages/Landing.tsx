@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
 import Logo from "@/components/Logo";
+import MobileMenu from "@/components/MobileMenu";
 
 const Landing = () => {
   const { t } = useI18n();
@@ -59,12 +60,18 @@ const Landing = () => {
       <nav className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
           <Logo />
-          <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3">
             <LangSwitcher />
             <Link to="/login">
               <Button variant="ghost" className="text-muted-foreground hover:text-foreground">{t("nav.login")}</Button>
             </Link>
           </div>
+          <MobileMenu
+            items={[
+              { label: t("nav.login"), to: "/login" },
+            ]}
+            extra={<LangSwitcher />}
+          />
         </div>
       </nav>
 
