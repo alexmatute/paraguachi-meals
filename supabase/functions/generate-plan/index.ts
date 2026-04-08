@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { ingredientes, preferencias, usuario_id, dias_solicitados, idioma } = await req.json();
+    const { ingredientes, preferencias, usuario_id, dias_solicitados, idioma, medidas_corporales } = await req.json();
     const lang = idioma === "en" ? "en" : "es";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -76,6 +76,29 @@ serve(async (req) => {
     const reuseContext = reusedNames.length > 0
       ? `\nRECETAS PRE-APROBADAS PARA REUTILIZAR (incluye estas tal como están, no las modifiques, úsalas para cubrir hasta ${reusedNames.length} comidas):\n${reusedNames.map((n: string) => `- ${n}`).join("\n")}\nEstas recetas son populares entre otros usuarios y ya están validadas.`
       : "";
+
+    // Build nutrition context from body metrics
+    let nutritionContext = "";
+    if (medidas_corporales && medidas_corporales.peso_kg) {
+      const mc = medidas_corporales;
+      nutritionContext = `\n\nDATOS NUTRICIONALES DEL USUARIO (actúa como nutricionista certificado):
+- Peso actual: ${mc.peso_kg} kg
+- Estatura: ${mc.altura_cm} cm
+- Edad: ${mc.edad} años
+- Sexo: ${mc.sexo === "male" ? "Masculino" : "Femenino"}
+- Nivel de actividad: ${mc.actividad}
+- IMC calculado: ${mc.imc}
+- TDEE estimado: ${mc.tdee} kcal/día
+${mc.peso_meta ? `- Meta de peso: ${mc.peso_meta} kg` : ""}
+- Preferencia de medición: ${mc.tipo_dieta === "kcal" ? "Por calorías (kcal)" : "Por porciones/peso"}
+
+INSTRUCCIONES NUTRICIONALES:
+- Calcula el déficit/superávit calórico apropiado según el objetivo (máx 500 kcal déficit para perder grasa, 300-500 superávit para ganar músculo)
+- Distribuye macronutrientes: Proteínas ${mc.peso_meta && mc.peso_meta < mc.peso_kg ? "1.6-2.2g" : "1.8-2.5g"}/kg peso corporal, Grasas 25-35% calorías, Carbohidratos el resto
+- ${mc.tipo_dieta === "kcal" ? "Muestra las calorías exactas por comida y el total diario" : "Indica porciones en gramos/medidas caseras"}
+- Adapta las porciones para cumplir los macros objetivo
+- Cada día debe sumar aproximadamente ${mc.tdee ? (mc.peso_meta && mc.peso_meta < mc.peso_kg ? mc.tdee - 400 : mc.peso_meta && mc.peso_meta > mc.peso_kg ? mc.tdee + 350 : mc.tdee) : "las calorías calculadas"} kcal`;
+    }
 
     const systemPrompt = `Eres Chef AI de Paraguachi Meals Prep. 
 Genera planes de comida personalizados.
@@ -162,6 +185,7 @@ IMPORTANTE:
 - Usa los ingredientes disponibles
 - Incluye el análisis de ingredientes
 - Marca "reutilizada": true en recetas que vienen de las PRE-APROBADAS
+${nutritionContext}
 - Responde SOLO con el JSON, sin texto adicional`;
 
     const userMessage = `Genera un plan de ${diasPlan} días con estos datos:
