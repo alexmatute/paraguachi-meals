@@ -12,15 +12,15 @@ export function useAuth() {
   const [checkingSub, setCheckingSub] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
-  const checkSubscription = useCallback(async () => {
+  const checkSubscription = useCallback(async (isBackground = false) => {
     if (!user) {
       setSubscribed(false);
       setSubscriptionEnd(null);
-      setCheckingSub(false);
+      if (!isBackground) setCheckingSub(false);
       return;
     }
 
-    setCheckingSub(true);
+    if (!isBackground) setCheckingSub(true);
     try {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (!error && data) {
