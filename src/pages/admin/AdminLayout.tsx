@@ -1,7 +1,5 @@
-import { useEffect } from "react";
-import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
-import { Loader2, BarChart3, Users, CreditCard, Bot, Globe, LogOut, Palette } from "lucide-react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { BarChart3, Users, CreditCard, Bot, Globe, LogOut, Palette } from "lucide-react";
 import Logo from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,7 +12,6 @@ import LangSwitcher from "@/components/LangSwitcher";
 
 const AdminLayout = () => {
   const { t } = useI18n();
-  const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const navItems = [
@@ -26,13 +23,6 @@ const AdminLayout = () => {
     { title: t("admin.connections"), url: "/admin/conexiones", icon: Globe },
     { title: t("admin.branding"), url: "/admin/marca", icon: Palette },
   ];
-
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) navigate("/dashboard");
-  }, [loading, user, isAdmin]);
-
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  if (!isAdmin) return null;
 
   return (
     <SidebarProvider>
@@ -47,7 +37,7 @@ const AdminLayout = () => {
               <SidebarGroupLabel>{t("admin.menu")}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navItems.map(item => (
+                  {navItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink to={item.url} end={item.url === "/admin"} className="hover:bg-muted/50" activeClassName="bg-primary/10 text-primary font-medium">
@@ -61,8 +51,13 @@ const AdminLayout = () => {
               </SidebarGroupContent>
             </SidebarGroup>
             <div className="mt-auto p-4">
-              <button onClick={async () => { await supabase.auth.signOut(); navigate("/"); }}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full">
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  navigate("/");
+                }}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full"
+              >
                 <LogOut className="h-4 w-4" /> {t("admin.exit")}
               </button>
             </div>
