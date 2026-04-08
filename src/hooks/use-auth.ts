@@ -1,15 +1,24 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+type AuthUser = Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"];
+
 export function useAuth() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [checkingSub, setCheckingSub] = useState(false);
 
-  const checkSubscription = async () => {
+  const checkSubscription = useCallback(async () => {
+    if (!user) {
+      setSubscribed(false);
+      setSubscriptionEnd(null);
+      setCheckingSub(false);
+      return;
+    }
+
     setCheckingSub(true);
     try {
       const { data, error } = await supabase.functions.invoke("check-subscription");
@@ -18,52 +27,78 @@ export function useAuth() {
         setSubscriptionEnd(data.subscription_end || null);
       }
     } catch {
-      // silent
+      setSubscribed(false);
+      setSubscriptionEnd(null);
     } finally {
       setCheckingSub(false);
     }
-  };
+  }, [user]);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        const { data } = await supabase
+  const loadAccessState = useCallback(async (nextUser: AuthUser | null) => {
+    setUser(nextUser);
+
+    if (!nextUser) {
+      setIsAdmin(false);
+      setSubscribed(false);
+      setSubscriptionEnd(null);
+      setCheckingSub(false);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const [{ data: roleData }, { data: subscriptionData, error: subscriptionError }] = await Promise.all([
+        supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", u.id)
+          .eq("user_id", nextUser.id)
           .eq("role", "admin")
-          .maybeSingle();
-        setIsAdmin(!!data);
+          .maybeSingle(),
+        supabase.functions.invoke("check-subscription"),
+      ]);
+
+      setIsAdmin(!!roleData);
+
+      if (!subscriptionError && subscriptionData) {
+        setSubscribed(!!subscriptionData.subscribed);
+        setSubscriptionEnd(subscriptionData.subscription_end || null);
       } else {
-        setIsAdmin(false);
         setSubscribed(false);
         setSubscriptionEnd(null);
       }
+    } catch {
+      setIsAdmin(false);
+      setSubscribed(false);
+      setSubscriptionEnd(null);
+    } finally {
       setLoading(false);
+      setCheckingSub(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      void loadAccessState(session?.user ?? null);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        supabase.from("user_roles").select("role").eq("user_id", u.id).eq("role", "admin").maybeSingle()
-          .then(({ data }) => setIsAdmin(!!data));
-        checkSubscription();
-      }
-      setLoading(false);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      void loadAccessState(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadAccessState]);
 
-  // Periodic subscription check every 60s
   useEffect(() => {
     if (!user) return;
-    const interval = setInterval(checkSubscription, 60000);
+    const interval = setInterval(() => {
+      void checkSubscription();
+    }, 60000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, checkSubscription]);
 
   return { user, loading, isAdmin, subscribed, subscriptionEnd, checkingSub, checkSubscription };
 }
