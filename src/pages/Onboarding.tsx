@@ -669,7 +669,7 @@ const Onboarding = () => {
               </div>
               {!loading ? (
                 <Button onClick={handleGenerate} className="w-full mt-6 bg-primary text-primary-foreground font-heading font-semibold h-12">
-                  {t("onboarding.generate")} {selectedDays === "auto" ? "28" : selectedDays} {t("onboarding.step7.days")}
+                  {t("onboarding.generate")} {selectedDays === "auto" ? maxSubDays : selectedDays} {t("onboarding.step7.days")}
                 </Button>
               ) : (
                 <div className="mt-6 text-center">
