@@ -10,6 +10,7 @@ export function useAuth() {
   const [subscribed, setSubscribed] = useState(false);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [checkingSub, setCheckingSub] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   const checkSubscription = useCallback(async () => {
     if (!user) {
