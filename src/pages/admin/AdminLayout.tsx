@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, BarChart3, Users, CreditCard, Bot, Globe, LogOut } from "lucide-react";
+import { Loader2, BarChart3, Users, CreditCard, Bot, Globe, LogOut, Palette } from "lucide-react";
 import Logo from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -24,6 +24,7 @@ const AdminLayout = () => {
     { title: t("admin.recipes"), url: "/admin/recetas", icon: Users },
     { title: t("admin.aiUsage"), url: "/admin/ia", icon: Bot },
     { title: t("admin.connections"), url: "/admin/conexiones", icon: Globe },
+    { title: t("admin.branding"), url: "/admin/marca", icon: Palette },
   ];
 
   useEffect(() => {
