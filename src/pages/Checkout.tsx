@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChefHat, CreditCard, Loader2, CheckCircle, Check } from "lucide-react";
+import { CreditCard, Loader2, CheckCircle, Check } from "lucide-react";
+import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";

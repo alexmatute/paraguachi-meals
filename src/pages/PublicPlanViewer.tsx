@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ChefHat, Clock, Flame, Loader2, ShoppingCart, BookOpen } from "lucide-react";
+import { Clock, Flame, Loader2, ShoppingCart, BookOpen } from "lucide-react";
+import Logo from "@/components/Logo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";

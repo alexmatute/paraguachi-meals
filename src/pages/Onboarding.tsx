@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChefHat, Loader2, Minus, Plus, Upload, Camera, Image, X, Check } from "lucide-react";
+import { Loader2, Minus, Plus, Upload, Camera, Image, X, Check } from "lucide-react";
+import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import {
   proteinasAnimales, proteinasVegetales, lacteos, granos, vegetales, frutas, condimentos,
