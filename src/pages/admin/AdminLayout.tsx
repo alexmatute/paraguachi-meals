@@ -1,5 +1,5 @@
-import { Outlet, useNavigate } from "react-router-dom";
-import { BarChart3, Users, CreditCard, Bot, Globe, LogOut, Palette } from "lucide-react";
+import { Outlet, useNavigate, Link } from "react-router-dom";
+import { BarChart3, Users, CreditCard, Bot, Globe, LogOut, Palette, ArrowLeft } from "lucide-react";
 import Logo from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import {
