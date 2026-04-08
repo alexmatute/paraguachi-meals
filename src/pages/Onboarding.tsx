@@ -274,7 +274,7 @@ const Onboarding = () => {
       }
 
       const ingredientes = [...selectedFoods, ...manualIngredients.split("\n").filter(Boolean)].join(", ");
-      const diasSolicitados = selectedDays === "auto" ? 28 : parseInt(selectedDays);
+      const diasSolicitados = selectedDays === "auto" ? maxSubDays : Math.min(parseInt(selectedDays), maxSubDays);
 
       const bodyMetrics = needsBodyStep ? {
         peso_kg: parseFloat(bodyWeight) || null,
