@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Search, Eye, Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Search, Eye, Loader2, UserPlus, Gift, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -11,6 +13,16 @@ const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [userPlans, setUserPlans] = useState<any[]>([]);
+
+  // Create user dialog
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ email: "", password: "", nombre: "" });
+  const [creating, setCreating] = useState(false);
+
+  // Subscription dialog
+  const [subUser, setSubUser] = useState<any>(null);
+  const [subDays, setSubDays] = useState("30");
+  const [settingSub, setSettingSub] = useState(false);
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -26,6 +38,43 @@ const AdminUsers = () => {
     setUserPlans(data || []);
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "create_user", ...createForm },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Usuario creado exitosamente");
+      setShowCreate(false);
+      setCreateForm({ email: "", password: "", nombre: "" });
+      await loadUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Error al crear usuario");
+    }
+    setCreating(false);
+  };
+
+  const handleSetSubscription = async (active: boolean) => {
+    if (!subUser) return;
+    setSettingSub(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "set_subscription", user_id: subUser.id, active, days: active ? Number(subDays) : 0 },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(active ? `Suscripción activada por ${subDays} días` : "Suscripción desactivada");
+      setSubUser(null);
+      await loadUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Error al actualizar suscripción");
+    }
+    setSettingSub(false);
+  };
+
   const filtered = users.filter(u =>
     (u.nombre || "").toLowerCase().includes(search.toLowerCase()) ||
     (u.email || "").toLowerCase().includes(search.toLowerCase())
@@ -35,9 +84,15 @@ const AdminUsers = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="font-heading text-2xl font-bold">Usuarios</h1>
-        <span className="text-sm text-muted-foreground">{users.length} registrados</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{users.length} registrados</span>
+          <Button onClick={() => setShowCreate(true)} size="sm" className="gap-1.5">
+            <UserPlus className="h-4 w-4" />
+            Crear usuario
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -75,10 +130,22 @@ const AdminUsers = () => {
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${u.suscripcion_activa ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
                       {u.suscripcion_activa ? "Activa" : "Inactiva"}
                     </span>
+                    {u.suscripcion_hasta && u.suscripcion_activa && (
+                      <span className="text-[10px] text-muted-foreground ml-1">
+                        hasta {new Date(u.suscripcion_hasta).toLocaleDateString("es-ES")}
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 text-muted-foreground text-xs">{new Date(u.creado_en).toLocaleDateString("es-ES")}</td>
                   <td className="p-3 text-right">
-                    <button onClick={() => viewUser(u)} className="text-primary hover:text-primary/80"><Eye className="h-4 w-4" /></button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setSubUser(u)} className="text-amber-500 hover:text-amber-400 p-1" title="Gestionar suscripción">
+                        <Gift className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => viewUser(u)} className="text-primary hover:text-primary/80 p-1" title="Ver perfil">
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -86,6 +153,98 @@ const AdminUsers = () => {
           </table>
         </div>
       </div>
+
+      {/* Create User Dialog */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              Crear usuario manual
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateUser} className="space-y-4">
+            <div>
+              <Label htmlFor="cr-nombre">Nombre</Label>
+              <Input id="cr-nombre" value={createForm.nombre} onChange={e => setCreateForm(p => ({ ...p, nombre: e.target.value }))} placeholder="Nombre completo" className="mt-1 bg-background border-border" />
+            </div>
+            <div>
+              <Label htmlFor="cr-email">Email *</Label>
+              <Input id="cr-email" type="email" value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} required placeholder="correo@ejemplo.com" className="mt-1 bg-background border-border" />
+            </div>
+            <div>
+              <Label htmlFor="cr-pass">Contraseña *</Label>
+              <Input id="cr-pass" type="password" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} required minLength={6} placeholder="Mínimo 6 caracteres" className="mt-1 bg-background border-border" />
+            </div>
+            <p className="text-xs text-muted-foreground">El usuario se creará con email verificado. Ideal para afiliados y promos.</p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>Cancelar</Button>
+              <Button type="submit" disabled={creating} className="gap-1.5">
+                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                Crear
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Subscription Dialog */}
+      <Dialog open={!!subUser} onOpenChange={() => setSubUser(null)}>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading flex items-center gap-2">
+              <Gift className="h-5 w-5 text-amber-500" />
+              Gestionar suscripción
+            </DialogTitle>
+          </DialogHeader>
+          {subUser && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border p-3 bg-background">
+                <p className="font-medium">{subUser.nombre || "Sin nombre"}</p>
+                <p className="text-sm text-muted-foreground">{subUser.email}</p>
+                <p className="text-xs mt-1">
+                  Estado: <span className={subUser.suscripcion_activa ? "text-primary" : "text-destructive"}>{subUser.suscripcion_activa ? "Activa" : "Inactiva"}</span>
+                  {subUser.suscripcion_hasta && subUser.suscripcion_activa && (
+                    <span className="text-muted-foreground"> — hasta {new Date(subUser.suscripcion_hasta).toLocaleDateString("es-ES")}</span>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <Label>Duración de la suscripción (días)</Label>
+                <div className="flex gap-2 mt-1.5">
+                  {["7", "14", "30", "90", "365"].map(d => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setSubDays(d)}
+                      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${subDays === d ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {d}d
+                    </button>
+                  ))}
+                </div>
+                <Input type="number" value={subDays} onChange={e => setSubDays(e.target.value)} min="1" max="3650" className="mt-2 bg-background border-border w-32" />
+              </div>
+
+              <p className="text-xs text-muted-foreground">Útil para regalar acceso a afiliados, influencers o campañas de marketing.</p>
+
+              <div className="flex justify-between gap-2">
+                {subUser.suscripcion_activa && (
+                  <Button variant="destructive" onClick={() => handleSetSubscription(false)} disabled={settingSub} className="gap-1.5">
+                    {settingSub ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                    Desactivar
+                  </Button>
+                )}
+                <Button onClick={() => handleSetSubscription(true)} disabled={settingSub} className="gap-1.5 ml-auto">
+                  {settingSub ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
+                  Activar {subDays} días
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* User Detail Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
