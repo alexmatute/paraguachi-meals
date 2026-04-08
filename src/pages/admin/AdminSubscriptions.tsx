@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import { CreditCard, Crown, Clock, Users, Calendar } from "lucide-react";
+import { Crown, Clock, Users, Plus, Ban, CalendarPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface SubscribedUser {
   id: string;
@@ -15,12 +20,6 @@ interface SubscribedUser {
   creado_en: string | null;
 }
 
-const PLAN_PRICES: Record<string, number> = {
-  semanal: 10,
-  quincenal: 20,
-  mensual: 35,
-};
-
 const TAG_COLORS: Record<string, string> = {
   afiliado: "bg-blue-100 text-blue-800",
   influencer: "bg-purple-100 text-purple-800",
@@ -31,6 +30,11 @@ const TAG_COLORS: Record<string, string> = {
 const AdminSubscriptions = () => {
   const [users, setUsers] = useState<SubscribedUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [revokeUser, setRevokeUser] = useState<SubscribedUser | null>(null);
+  const [revoking, setRevoking] = useState(false);
+  const [extendUser, setExtendUser] = useState<SubscribedUser | null>(null);
+  const [extendDays, setExtendDays] = useState("30");
+  const [extending, setExtending] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -46,6 +50,38 @@ const AdminSubscriptions = () => {
     setLoading(false);
   };
 
+  const handleRevoke = async () => {
+    if (!revokeUser) return;
+    setRevoking(true);
+    const { error } = await supabase.functions.invoke("admin-users", {
+      body: { action: "set_subscription", user_id: revokeUser.id, active: false },
+    });
+    setRevoking(false);
+    setRevokeUser(null);
+    if (error) {
+      toast.error("Error al revocar suscripción");
+    } else {
+      toast.success("Suscripción revocada");
+      await loadUsers();
+    }
+  };
+
+  const handleExtend = async () => {
+    if (!extendUser) return;
+    setExtending(true);
+    const { error } = await supabase.functions.invoke("admin-users", {
+      body: { action: "set_subscription", user_id: extendUser.id, active: true, days: Number(extendDays) },
+    });
+    setExtending(false);
+    setExtendUser(null);
+    if (error) {
+      toast.error("Error al extender suscripción");
+    } else {
+      toast.success(`Suscripción extendida ${extendDays} días`);
+      await loadUsers();
+    }
+  };
+
   const now = new Date();
   const activeUsers = users.filter(
     (u) => u.suscripcion_activa && u.suscripcion_hasta && new Date(u.suscripcion_hasta) > now
@@ -55,10 +91,8 @@ const AdminSubscriptions = () => {
   );
   const neverSubscribed = users.filter((u) => !u.suscripcion_hasta);
 
-  // Estimate MRR: count active subs * $35 (default mensual)
   const mrr = activeUsers.length * 35;
   const arr = mrr * 12;
-
   const thisMonth = now.getMonth();
   const thisYear = now.getFullYear();
   const newThisMonth = activeUsers.filter((u) => {
@@ -69,14 +103,38 @@ const AdminSubscriptions = () => {
 
   const isExpiringSoon = (hasta: string) => {
     const diff = new Date(hasta).getTime() - now.getTime();
-    return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000; // 7 days
+    return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000;
   };
+
+  const ActionButtons = ({ user, showRevoke = true }: { user: SubscribedUser; showRevoke?: boolean }) => (
+    <div className="flex gap-1">
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1 text-xs"
+        onClick={() => { setExtendUser(user); setExtendDays("30"); }}
+      >
+        <CalendarPlus className="h-3 w-3" />
+        Extender
+      </Button>
+      {showRevoke && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 gap-1 text-xs text-destructive hover:bg-destructive/10"
+          onClick={() => setRevokeUser(user)}
+        >
+          <Ban className="h-3 w-3" />
+          Revocar
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
       <h1 className="font-heading text-2xl font-bold">Suscripciones</h1>
 
-      {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-4">
         <div className="card-surface p-5">
           <p className="text-xs text-muted-foreground">Activas</p>
@@ -96,7 +154,7 @@ const AdminSubscriptions = () => {
         </div>
       </div>
 
-      {/* Active Subscriptions */}
+      {/* Active */}
       <div className="card-surface overflow-hidden">
         <div className="flex items-center gap-2 border-b p-4">
           <Crown className="h-5 w-5 text-primary" />
@@ -116,6 +174,7 @@ const AdminSubscriptions = () => {
                   <th className="p-3">Etiqueta</th>
                   <th className="p-3">Vence</th>
                   <th className="p-3">Estado</th>
+                  <th className="p-3">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -125,17 +184,11 @@ const AdminSubscriptions = () => {
                     <td className="p-3 text-muted-foreground">{u.email}</td>
                     <td className="p-3">
                       {u.etiqueta ? (
-                        <Badge variant="outline" className={TAG_COLORS[u.etiqueta] || ""}>
-                          {u.etiqueta}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
+                        <Badge variant="outline" className={TAG_COLORS[u.etiqueta] || ""}>{u.etiqueta}</Badge>
+                      ) : "—"}
                     </td>
                     <td className="p-3">
-                      {u.suscripcion_hasta
-                        ? format(new Date(u.suscripcion_hasta), "dd MMM yyyy", { locale: es })
-                        : "—"}
+                      {u.suscripcion_hasta ? format(new Date(u.suscripcion_hasta), "dd MMM yyyy", { locale: es }) : "—"}
                     </td>
                     <td className="p-3">
                       {u.suscripcion_hasta && isExpiringSoon(u.suscripcion_hasta) ? (
@@ -144,6 +197,7 @@ const AdminSubscriptions = () => {
                         <Badge variant="outline" className="bg-emerald-100 text-emerald-800">Activa</Badge>
                       )}
                     </td>
+                    <td className="p-3"><ActionButtons user={u} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -166,6 +220,7 @@ const AdminSubscriptions = () => {
                   <th className="p-3">Usuario</th>
                   <th className="p-3">Email</th>
                   <th className="p-3">Venció</th>
+                  <th className="p-3">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,10 +229,9 @@ const AdminSubscriptions = () => {
                     <td className="p-3 font-medium">{u.nombre || "—"}</td>
                     <td className="p-3 text-muted-foreground">{u.email}</td>
                     <td className="p-3 text-destructive">
-                      {u.suscripcion_hasta
-                        ? format(new Date(u.suscripcion_hasta), "dd MMM yyyy", { locale: es })
-                        : "—"}
+                      {u.suscripcion_hasta ? format(new Date(u.suscripcion_hasta), "dd MMM yyyy", { locale: es }) : "—"}
                     </td>
+                    <td className="p-3"><ActionButtons user={u} showRevoke={false} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -200,6 +254,7 @@ const AdminSubscriptions = () => {
                   <th className="p-3">Usuario</th>
                   <th className="p-3">Email</th>
                   <th className="p-3">Registro</th>
+                  <th className="p-3">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -208,10 +263,9 @@ const AdminSubscriptions = () => {
                     <td className="p-3 font-medium">{u.nombre || "—"}</td>
                     <td className="p-3 text-muted-foreground">{u.email}</td>
                     <td className="p-3">
-                      {u.creado_en
-                        ? format(new Date(u.creado_en), "dd MMM yyyy", { locale: es })
-                        : "—"}
+                      {u.creado_en ? format(new Date(u.creado_en), "dd MMM yyyy", { locale: es }) : "—"}
                     </td>
+                    <td className="p-3"><ActionButtons user={u} showRevoke={false} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -219,6 +273,52 @@ const AdminSubscriptions = () => {
           </div>
         </div>
       )}
+
+      {/* Revoke confirmation */}
+      <AlertDialog open={!!revokeUser} onOpenChange={(o) => !o && setRevokeUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Revocar suscripción?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se desactivará la suscripción de <strong>{revokeUser?.nombre || revokeUser?.email}</strong>. El usuario perderá acceso inmediatamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={revoking}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRevoke} disabled={revoking} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {revoking ? "Revocando…" : "Revocar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Extend dialog */}
+      <Dialog open={!!extendUser} onOpenChange={(o) => !o && setExtendUser(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Extender suscripción</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Usuario: <strong>{extendUser?.nombre || extendUser?.email}</strong>
+          </p>
+          <Select value={extendDays} onValueChange={setExtendDays}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">7 días</SelectItem>
+              <SelectItem value="14">14 días</SelectItem>
+              <SelectItem value="30">30 días</SelectItem>
+              <SelectItem value="90">90 días</SelectItem>
+              <SelectItem value="365">1 año</SelectItem>
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExtendUser(null)} disabled={extending}>Cancelar</Button>
+            <Button onClick={handleExtend} disabled={extending}>
+              {extending ? "Extendiendo…" : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
