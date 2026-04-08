@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Plus, Calendar, Loader2, User, Download, Share2, FileText, Lightbulb, MessageCircle, Shield } from "lucide-react";
 import Logo from "@/components/Logo";
+import MobileMenu from "@/components/MobileMenu";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
@@ -84,7 +85,7 @@ const Dashboard = () => {
       <header className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
           <Logo />
-          <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3">
             <LangSwitcher />
             {isAdmin && (
               <Link to="/admin" className="flex items-center gap-1 rounded-full border border-primary/50 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
@@ -103,6 +104,14 @@ const Dashboard = () => {
             </span>
             <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground"><LogOut className="h-4 w-4" /></button>
           </div>
+          <MobileMenu
+            items={[
+              ...(isAdmin ? [{ label: "Admin", to: "/admin" }] : []),
+              { label: t("nav.profile") || "Perfil", to: "/perfil" },
+              { label: t("nav.logout") || "Cerrar sesión", to: "#", element: <button onClick={handleLogout} className="text-xl font-semibold text-black hover:text-black/70">{t("nav.logout") || "Cerrar sesión"}</button> },
+            ]}
+            extra={<LangSwitcher />}
+          />
         </div>
       </header>
 
