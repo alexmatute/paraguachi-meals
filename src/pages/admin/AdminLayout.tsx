@@ -1,27 +1,29 @@
 import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, BarChart3, Users, CreditCard, ChefHat, Bot, Globe, Settings, LogOut } from "lucide-react";
+import { Loader2, BarChart3, Users, CreditCard, ChefHat, Bot, Globe, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
   SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
-
-const navItems = [
-  { title: "Dashboard", url: "/admin", icon: BarChart3 },
-  { title: "Usuarios", url: "/admin/usuarios", icon: Users },
-  { title: "Suscripciones", url: "/admin/suscripciones", icon: CreditCard },
-  { title: "Recetas", url: "/admin/recetas", icon: ChefHat },
-  { title: "Uso de IA", url: "/admin/ia", icon: Bot },
-  { title: "Conexiones", url: "/admin/conexiones", icon: Globe },
-];
+import { useI18n } from "@/lib/i18n";
+import LangSwitcher from "@/components/LangSwitcher";
 
 const AdminLayout = () => {
+  const { t } = useI18n();
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
+
+  const navItems = [
+    { title: t("admin.dashboard"), url: "/admin", icon: BarChart3 },
+    { title: t("admin.users"), url: "/admin/usuarios", icon: Users },
+    { title: t("admin.subscriptions"), url: "/admin/suscripciones", icon: CreditCard },
+    { title: t("admin.recipes"), url: "/admin/recetas", icon: ChefHat },
+    { title: t("admin.aiUsage"), url: "/admin/ia", icon: Bot },
+    { title: t("admin.connections"), url: "/admin/conexiones", icon: Globe },
+  ];
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) navigate("/dashboard");
@@ -40,7 +42,7 @@ const AdminLayout = () => {
               <span className="font-heading text-sm font-bold text-primary truncate">Admin CRM</span>
             </div>
             <SidebarGroup>
-              <SidebarGroupLabel>Menú</SidebarGroupLabel>
+              <SidebarGroupLabel>{t("admin.menu")}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {navItems.map(item => (
@@ -59,16 +61,19 @@ const AdminLayout = () => {
             <div className="mt-auto p-4">
               <button onClick={async () => { await supabase.auth.signOut(); navigate("/"); }}
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full">
-                <LogOut className="h-4 w-4" /> Salir
+                <LogOut className="h-4 w-4" /> {t("admin.exit")}
               </button>
             </div>
           </SidebarContent>
         </Sidebar>
 
         <div className="flex-1 flex flex-col">
-          <header className="h-12 flex items-center border-b border-border px-4">
-            <SidebarTrigger className="mr-3" />
-            <span className="text-sm text-muted-foreground">Panel de Administración</span>
+          <header className="h-12 flex items-center justify-between border-b border-border px-4">
+            <div className="flex items-center">
+              <SidebarTrigger className="mr-3" />
+              <span className="text-sm text-muted-foreground">{t("admin.panel")}</span>
+            </div>
+            <LangSwitcher />
           </header>
           <main className="flex-1 p-6 overflow-auto">
             <Outlet />
