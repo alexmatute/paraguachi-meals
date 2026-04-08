@@ -401,6 +401,44 @@ const AdminUsers = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-heading">¿Eliminar usuario?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente a <strong>{deleteUser?.nombre || deleteUser?.email}</strong> y todos sus datos asociados. No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={async () => {
+                setDeleting(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke("admin-users", {
+                    body: { action: "delete_user", user_id: deleteUser.id },
+                  });
+                  if (error) throw error;
+                  if (data?.error) throw new Error(data.error);
+                  toast.success("Usuario eliminado");
+                  setDeleteUser(null);
+                  await loadUsers();
+                } catch (err: any) {
+                  toast.error(err.message || "Error al eliminar usuario");
+                }
+                setDeleting(false);
+              }}
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
