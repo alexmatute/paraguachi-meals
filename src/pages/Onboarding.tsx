@@ -299,12 +299,22 @@ const Onboarding = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if the response body has rate limit info
+        const errBody = data;
+        if (errBody?.code === "PLAN_LIMIT" || errBody?.code === "COOLDOWN") {
+          toast.error(errBody.error, { duration: 8000 });
+          setLoading(false);
+          return;
+        }
+        throw error;
+      }
 
       toast.success(t("onboarding.success"));
       navigate(`/plan/${data.plan_id}`);
     } catch (err: any) {
-      toast.error(t("onboarding.error") + (err.message || ""));
+      const msg = err?.message || "";
+      toast.error(t("onboarding.error") + msg);
     } finally {
       setLoading(false);
     }

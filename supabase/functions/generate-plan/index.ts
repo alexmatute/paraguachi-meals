@@ -20,6 +20,60 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // ─── RATE LIMITING: 2 plans/month + 6h cooldown ───
+    const PLANS_PER_MONTH = 2;
+    const COOLDOWN_HOURS = 6;
+
+    // Check how many plans this user generated this calendar month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { data: monthPlans, error: countErr } = await supabase
+      .from("planes")
+      .select("id, creado_en")
+      .eq("usuario_id", usuario_id)
+      .gte("creado_en", startOfMonth.toISOString())
+      .order("creado_en", { ascending: false });
+
+    if (countErr) {
+      console.error("Rate limit check error:", countErr);
+    }
+
+    const planCount = monthPlans?.length || 0;
+
+    if (planCount >= PLANS_PER_MONTH) {
+      return new Response(JSON.stringify({
+        error: lang === "en"
+          ? `You have reached the limit of ${PLANS_PER_MONTH} plans this month. Your next plan will be available next month.`
+          : `Has alcanzado el límite de ${PLANS_PER_MONTH} planes este mes. Tu próximo plan estará disponible el próximo mes.`,
+        code: "PLAN_LIMIT",
+        limit: PLANS_PER_MONTH,
+        used: planCount,
+      }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check 6-hour cooldown since last generation
+    if (monthPlans && monthPlans.length > 0) {
+      const lastPlanDate = new Date(monthPlans[0].creado_en);
+      const hoursSinceLast = (Date.now() - lastPlanDate.getTime()) / (1000 * 60 * 60);
+
+      if (hoursSinceLast < COOLDOWN_HOURS) {
+        const remainingHours = Math.ceil(COOLDOWN_HOURS - hoursSinceLast);
+        return new Response(JSON.stringify({
+          error: lang === "en"
+            ? `Please wait ${remainingHours} more hour(s) before generating another plan.`
+            : `Por favor espera ${remainingHours} hora(s) más antes de generar otro plan.`,
+          code: "COOLDOWN",
+          remaining_hours: remainingHours,
+        }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const diasPlan = dias_solicitados || 28;
     const semanasNum = Math.ceil(diasPlan / 7);
     const comidasPorDia = preferencias.comidas?.length || 3;
