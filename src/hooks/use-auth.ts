@@ -31,7 +31,7 @@ export function useAuth() {
       setSubscribed(false);
       setSubscriptionEnd(null);
     } finally {
-      setCheckingSub(false);
+      if (!isBackground) setCheckingSub(false);
     }
   }, [user]);
 
