@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
+import { RequireAuth, RequireSubscription, RequireAdmin } from "@/components/RouteGuards";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -32,16 +33,23 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/plan/:id" element={<PlanViewer />} />
-            <Route path="/perfil" element={<Profile />} />
             <Route path="/ver-plan/:token" element={<PublicPlanViewer />} />
-            <Route path="/admin" element={<AdminLayout />}>
+
+            {/* Auth required (no subscription needed for checkout) */}
+            <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
+            <Route path="/perfil" element={<RequireAuth><Profile /></RequireAuth>} />
+
+            {/* Subscription required */}
+            <Route path="/onboarding" element={<RequireSubscription><Onboarding /></RequireSubscription>} />
+            <Route path="/dashboard" element={<RequireSubscription><Dashboard /></RequireSubscription>} />
+            <Route path="/plan/:id" element={<RequireSubscription><PlanViewer /></RequireSubscription>} />
+
+            {/* Admin */}
+            <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
               <Route index element={<AdminDashboard />} />
               <Route path="usuarios" element={<AdminUsers />} />
               <Route path="suscripciones" element={<AdminSubscriptions />} />
@@ -49,6 +57,7 @@ const App = () => (
               <Route path="ia" element={<AdminAI />} />
               <Route path="conexiones" element={<AdminConnections />} />
             </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
