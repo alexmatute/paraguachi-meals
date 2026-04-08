@@ -156,7 +156,59 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { plan_id } = await req.json();
+    const body = await req.json();
+
+    // ─── AI Prediction mode ───
+    if (body.mode === "ai_prediction") {
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            {
+              role: "system",
+              content: `Eres un analista de datos de una app de meal prep. Analiza las métricas y predice:
+1. Tendencias de comportamiento de los usuarios
+2. Qué proteínas/ingredientes serán más demandados próximamente
+3. Horarios y patrones de generación de planes
+4. Recomendaciones para aumentar la reutilización de recetas y ahorrar costos AI
+5. Segmentos de usuarios y oportunidades de retención
+Responde en español, de forma concisa y accionable con emojis. Usa bullet points.`,
+            },
+            {
+              role: "user",
+              content: `Analiza estas métricas de mi plataforma de meal prep y genera predicciones:\n${body.context}`,
+            },
+          ],
+        }),
+      });
+
+      if (!aiResp.ok) {
+        if (aiResp.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limit" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error("AI gateway error");
+      }
+
+      const aiData = await aiResp.json();
+      const prediction = aiData.choices?.[0]?.message?.content || "";
+
+      return new Response(JSON.stringify({ prediction }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── HTML generation mode ───
+    const { plan_id } = body;
     if (!plan_id) throw new Error("plan_id es requerido");
 
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
@@ -172,7 +224,6 @@ serve(async (req) => {
 
     const html = generateHTML(plan.plan_json, plan.creado_en);
 
-    // Save HTML to plan
     await supabase.from("planes").update({ plan_html: html }).eq("id", plan_id);
 
     return new Response(JSON.stringify({ html }), {
