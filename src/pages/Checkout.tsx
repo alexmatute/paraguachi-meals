@@ -56,7 +56,7 @@ const Checkout = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-3xl">
         <div className="text-center mb-8">
-          <ChefHat className="mx-auto h-12 w-12 text-primary" />
+          <Logo size={48} className="mx-auto" />
           <h1 className="mt-4 font-heading text-2xl font-bold">{t("checkout.title")}</h1>
           <p className="mt-2 text-muted-foreground">{t("checkout.subtitle")}</p>
         </div>
