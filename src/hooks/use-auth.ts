@@ -76,6 +76,7 @@ export function useAuth() {
     } finally {
       setLoading(false);
       setCheckingSub(false);
+      setInitialCheckDone(true);
     }
   }, []);
 
