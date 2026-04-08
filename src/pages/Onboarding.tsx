@@ -639,7 +639,7 @@ const Onboarding = () => {
               <div className="card-surface p-4 border-primary/30 text-center">
                 <p className="text-sm text-muted-foreground">{t("onboarding.step7.based")}</p>
                 <p className="mt-1 font-heading text-lg font-bold text-primary">
-                  {t("onboarding.step7.upTo")} {(selectedDays === "auto" ? 28 : parseInt(selectedDays)) * selectedMeals.length} {t("onboarding.step7.uniqueRecipes")}
+                  {t("onboarding.step7.upTo")} {(selectedDays === "auto" ? maxSubDays : parseInt(selectedDays)) * selectedMeals.length} {t("onboarding.step7.uniqueRecipes")}
                 </p>
               </div>
             </div>
