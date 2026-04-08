@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { ingredientes, preferencias, usuario_id, dias_solicitados, idioma } = await req.json();
+    const { ingredientes, preferencias, usuario_id, dias_solicitados, idioma, medidas_corporales } = await req.json();
     const lang = idioma === "en" ? "en" : "es";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
