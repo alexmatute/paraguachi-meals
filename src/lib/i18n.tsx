@@ -22,6 +22,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Nav & Common
     "nav.login": "Iniciar sesión",
     "nav.logout": "Salir",
+    "nav.profile": "Perfil",
     "common.next": "Siguiente →",
     "common.prev": "← Anterior",
     "common.save": "Guardar cambios",
@@ -305,6 +306,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Nav & Common
     "nav.login": "Sign in",
     "nav.logout": "Log out",
+    "nav.profile": "Profile",
     "common.next": "Next →",
     "common.prev": "← Back",
     "common.save": "Save changes",
