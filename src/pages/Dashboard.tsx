@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ChefHat, LogOut, Plus, Calendar, Loader2 } from "lucide-react";
+import { ChefHat, LogOut, Plus, Calendar, Loader2, User, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 interface Plan {
