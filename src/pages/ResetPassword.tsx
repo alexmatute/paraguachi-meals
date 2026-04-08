@@ -55,7 +55,7 @@ const ResetPassword = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="w-full max-w-sm text-center">
-          <Logo size={40} className="mx-auto" />
+          <Logo size={56} className="mx-auto" />
           <p className="mt-4 text-muted-foreground">{t("reset.invalid")}</p>
           <Button variant="link" onClick={() => navigate("/login")} className="mt-4 text-primary">
             {t("nav.login")}
@@ -81,7 +81,7 @@ const ResetPassword = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <Logo size={32} className="mx-auto" />
+          <Logo size={56} className="mx-auto" />
           <h1 className="mt-6 font-heading text-2xl font-bold">{t("reset.title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{t("reset.subtitle")}</p>
         </div>

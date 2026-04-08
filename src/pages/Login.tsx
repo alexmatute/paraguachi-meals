@@ -34,9 +34,9 @@ const Login = () => {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="flex justify-center mb-4"><LangSwitcher /></div>
-          <Link to="/" className="inline-flex items-center gap-2">
-            <Logo size={32} />
-            <span className="font-heading text-xl font-bold text-primary">Paraguachi</span>
+          <Link to="/" className="inline-flex items-center gap-3">
+            <Logo size={48} />
+            <span className="font-heading text-xl font-bold text-primary">Meal Prep</span>
           </Link>
           <h1 className="mt-6 font-heading text-2xl font-bold">{t("login.title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{t("login.subtitle")}</p>
