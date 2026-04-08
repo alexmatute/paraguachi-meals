@@ -97,7 +97,7 @@ export function useAuth() {
   useEffect(() => {
     if (!user) return;
     const interval = setInterval(() => {
-      void checkSubscription();
+      void checkSubscription(true);
     }, 60000);
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
