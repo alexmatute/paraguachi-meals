@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, BarChart3, Users, CreditCard, ChefHat, Bot, Globe, LogOut } from "lucide-react";
+import { Loader2, BarChart3, Users, CreditCard, Bot, Globe, LogOut } from "lucide-react";
+import Logo from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import {
   SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -20,7 +21,7 @@ const AdminLayout = () => {
     { title: t("admin.dashboard"), url: "/admin", icon: BarChart3 },
     { title: t("admin.users"), url: "/admin/usuarios", icon: Users },
     { title: t("admin.subscriptions"), url: "/admin/suscripciones", icon: CreditCard },
-    { title: t("admin.recipes"), url: "/admin/recetas", icon: ChefHat },
+    { title: t("admin.recipes"), url: "/admin/recetas", icon: Users },
     { title: t("admin.aiUsage"), url: "/admin/ia", icon: Bot },
     { title: t("admin.connections"), url: "/admin/conexiones", icon: Globe },
   ];
@@ -38,7 +39,7 @@ const AdminLayout = () => {
         <Sidebar collapsible="icon" className="border-r border-border">
           <SidebarContent>
             <div className="p-4 flex items-center gap-2">
-              <ChefHat className="h-6 w-6 text-primary shrink-0" />
+              <Logo size={24} />
               <span className="font-heading text-sm font-bold text-primary truncate">Admin CRM</span>
             </div>
             <SidebarGroup>

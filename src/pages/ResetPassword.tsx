@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChefHat, Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
+import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 
@@ -54,7 +55,7 @@ const ResetPassword = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="w-full max-w-sm text-center">
-          <ChefHat className="mx-auto h-10 w-10 text-primary" />
+          <Logo size={40} className="mx-auto" />
           <p className="mt-4 text-muted-foreground">{t("reset.invalid")}</p>
           <Button variant="link" onClick={() => navigate("/login")} className="mt-4 text-primary">
             {t("nav.login")}
@@ -80,7 +81,7 @@ const ResetPassword = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <ChefHat className="mx-auto h-8 w-8 text-primary" />
+          <Logo size={32} className="mx-auto" />
           <h1 className="mt-6 font-heading text-2xl font-bold">{t("reset.title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{t("reset.subtitle")}</p>
         </div>

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChefHat, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
@@ -40,7 +41,7 @@ const Register = () => {
         <div className="mb-8 text-center">
           <div className="flex justify-center mb-4"><LangSwitcher /></div>
           <Link to="/" className="inline-flex items-center gap-2">
-            <ChefHat className="h-8 w-8 text-primary" />
+            <Logo size={32} />
             <span className="font-heading text-xl font-bold text-primary">Paraguachi</span>
           </Link>
           <h1 className="mt-6 font-heading text-2xl font-bold">{t("register.title")}</h1>

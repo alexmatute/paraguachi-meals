@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChefHat, LogOut, Plus, Calendar, Loader2, User, Download, Share2, FileText, Lightbulb, MessageCircle } from "lucide-react";
+import { LogOut, Plus, Calendar, Loader2, User, Download, Share2, FileText, Lightbulb, MessageCircle } from "lucide-react";
+import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
@@ -81,7 +82,7 @@ const Dashboard = () => {
       <header className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ChefHat className="h-6 w-6 text-primary" />
+            <Logo size={24} />
             <span className="font-heading text-lg font-bold text-primary">Paraguachi</span>
           </div>
           <div className="flex items-center gap-3">
@@ -138,7 +139,7 @@ const Dashboard = () => {
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : plans.length === 0 ? (
           <div className="card-surface p-12 text-center">
-            <ChefHat className="mx-auto h-12 w-12 text-muted-foreground" />
+            <Logo size={48} className="mx-auto opacity-50" />
             <h3 className="mt-4 font-heading text-lg font-semibold">{t("dashboard.noPlans")}</h3>
             <p className="mt-2 text-sm text-muted-foreground">{t("dashboard.noPlansDesc")}</p>
             <Link to="/onboarding" className="block mt-6"><Button className="bg-primary text-primary-foreground font-semibold">{t("dashboard.start")}</Button></Link>

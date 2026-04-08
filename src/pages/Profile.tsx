@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChefHat, Camera, Loader2, ArrowLeft, Shield, MessageCircle, CreditCard, ExternalLink } from "lucide-react";
+import { Camera, Loader2, ArrowLeft, Shield, MessageCircle, CreditCard, ExternalLink } from "lucide-react";
+import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import { alergias, dietas, salud, preferenciasComida } from "@/lib/onboarding-data";
 import { useI18n } from "@/lib/i18n";
@@ -85,7 +86,7 @@ const Profile = () => {
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/dashboard")} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></button>
-            <ChefHat className="h-6 w-6 text-primary" />
+            <Logo size={24} />
             <span className="font-heading text-lg font-bold text-primary">{t("profile.title")}</span>
           </div>
           <LangSwitcher />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChefHat, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const AdminRecipes = () => {
   const [stats, setStats] = useState({ total: 0, avgPerPlan: 0 });

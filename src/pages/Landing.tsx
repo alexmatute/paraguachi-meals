@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { Check, ChefHat, Clock, Crown, Globe, Heart, Leaf, ListChecks, ShoppingCart, Sparkles, Star } from "lucide-react";
+import { Check, Clock, Crown, Globe, Heart, Leaf, ListChecks, ShoppingCart, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
+import Logo from "@/components/Logo";
 
 const Landing = () => {
   const { t } = useI18n();
@@ -58,7 +59,7 @@ const Landing = () => {
       <nav className="border-b border-border/50 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ChefHat className="h-7 w-7 text-primary" />
+            <Logo size={28} />
             <span className="font-heading text-xl font-bold text-primary">Paraguachi Meals Prep</span>
           </div>
           <div className="flex items-center gap-3">
@@ -188,7 +189,7 @@ const Landing = () => {
       <footer className="border-t border-border/50 py-8">
         <div className="container text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <ChefHat className="h-5 w-5 text-primary" />
+            <Logo size={20} />
             <span className="font-heading text-sm font-bold text-primary">Paraguachi Meals Prep</span>
           </div>
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">{t("footer.credits")}</p>
