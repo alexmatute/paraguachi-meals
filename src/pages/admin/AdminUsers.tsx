@@ -2,10 +2,21 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, Loader2, UserPlus, Gift, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Eye, Loader2, UserPlus, Gift, X, Tag } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+
+const TAGS = ["afiliado", "influencer", "promo", "cortesía", "beta"];
+const TAG_COLORS: Record<string, string> = {
+  afiliado: "bg-blue-500/20 text-blue-400",
+  influencer: "bg-purple-500/20 text-purple-400",
+  promo: "bg-amber-500/20 text-amber-400",
+  cortesía: "bg-emerald-500/20 text-emerald-400",
+  beta: "bg-cyan-500/20 text-cyan-400",
+};
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -16,7 +27,8 @@ const AdminUsers = () => {
 
   // Create user dialog
   const [showCreate, setShowCreate] = useState(false);
-  const [createForm, setCreateForm] = useState({ email: "", password: "", nombre: "" });
+  const [createForm, setCreateForm] = useState({ email: "", password: "", nombre: "", etiqueta: "", subscribe_days: "30" });
+  const [withSubscription, setWithSubscription] = useState(true);
   const [creating, setCreating] = useState(false);
 
   // Subscription dialog
@@ -42,14 +54,22 @@ const AdminUsers = () => {
     e.preventDefault();
     setCreating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "create_user", ...createForm },
-      });
+      const body: Record<string, any> = {
+        action: "create_user",
+        email: createForm.email,
+        password: createForm.password,
+        nombre: createForm.nombre,
+        etiqueta: createForm.etiqueta || null,
+      };
+      if (withSubscription && Number(createForm.subscribe_days) > 0) {
+        body.subscribe_days = Number(createForm.subscribe_days);
+      }
+      const { data, error } = await supabase.functions.invoke("admin-users", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Usuario creado exitosamente");
+      toast.success(withSubscription ? `Usuario creado con suscripción de ${createForm.subscribe_days} días` : "Usuario creado exitosamente");
       setShowCreate(false);
-      setCreateForm({ email: "", password: "", nombre: "" });
+      setCreateForm({ email: "", password: "", nombre: "", etiqueta: "", subscribe_days: "30" });
       await loadUsers();
     } catch (err: any) {
       toast.error(err.message || "Error al crear usuario");
@@ -77,7 +97,8 @@ const AdminUsers = () => {
 
   const filtered = users.filter(u =>
     (u.nombre || "").toLowerCase().includes(search.toLowerCase()) ||
-    (u.email || "").toLowerCase().includes(search.toLowerCase())
+    (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
+    (u.etiqueta || "").toLowerCase().includes(search.toLowerCase())
   );
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -97,7 +118,7 @@ const AdminUsers = () => {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Buscar por nombre o email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-card border-border" />
+        <Input placeholder="Buscar por nombre, email o etiqueta..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-card border-border" />
       </div>
 
       <div className="card-surface overflow-hidden">
@@ -107,7 +128,7 @@ const AdminUsers = () => {
               <tr className="border-b border-border">
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Usuario</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Email</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium">País</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium">Etiqueta</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Suscripción</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Registro</th>
                 <th className="text-right p-3 text-xs text-muted-foreground font-medium">Acciones</th>
@@ -125,7 +146,13 @@ const AdminUsers = () => {
                     </div>
                   </td>
                   <td className="p-3 text-muted-foreground">{u.email}</td>
-                  <td className="p-3 text-muted-foreground">{u.pais || "—"}</td>
+                  <td className="p-3">
+                    {u.etiqueta ? (
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${TAG_COLORS[u.etiqueta] || "bg-muted text-muted-foreground"}`}>
+                        {u.etiqueta}
+                      </span>
+                    ) : <span className="text-muted-foreground text-xs">—</span>}
+                  </td>
                   <td className="p-3">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${u.suscripcion_activa ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
                       {u.suscripcion_activa ? "Activa" : "Inactiva"}
@@ -176,12 +203,58 @@ const AdminUsers = () => {
               <Label htmlFor="cr-pass">Contraseña *</Label>
               <Input id="cr-pass" type="password" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} required minLength={6} placeholder="Mínimo 6 caracteres" className="mt-1 bg-background border-border" />
             </div>
-            <p className="text-xs text-muted-foreground">El usuario se creará con email verificado. Ideal para afiliados y promos.</p>
+
+            {/* Tag selector */}
+            <div>
+              <Label>Etiqueta</Label>
+              <Select value={createForm.etiqueta} onValueChange={v => setCreateForm(p => ({ ...p, etiqueta: v }))}>
+                <SelectTrigger className="mt-1 bg-background border-border">
+                  <SelectValue placeholder="Sin etiqueta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TAGS.map(tag => (
+                    <SelectItem key={tag} value={tag}>
+                      <span className="flex items-center gap-2">
+                        <span className={`inline-block h-2 w-2 rounded-full ${TAG_COLORS[tag]?.split(" ")[0] || "bg-muted"}`} />
+                        {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subscription toggle */}
+            <div className="rounded-lg border border-border p-3 bg-background space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Activar suscripción al crear</Label>
+                <Switch checked={withSubscription} onCheckedChange={setWithSubscription} />
+              </div>
+              {withSubscription && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Duración (días)</Label>
+                  <div className="flex gap-2 mt-1.5">
+                    {["7", "14", "30", "90", "365"].map(d => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setCreateForm(p => ({ ...p, subscribe_days: d }))}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${createForm.subscribe_days === d ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {d}d
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">El usuario se crea con email verificado. Ideal para afiliados, influencers y promos.</p>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>Cancelar</Button>
               <Button type="submit" disabled={creating} className="gap-1.5">
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                Crear
+                {withSubscription ? `Crear + ${createForm.subscribe_days}d` : "Crear"}
               </Button>
             </div>
           </form>
@@ -202,12 +275,19 @@ const AdminUsers = () => {
               <div className="rounded-lg border border-border p-3 bg-background">
                 <p className="font-medium">{subUser.nombre || "Sin nombre"}</p>
                 <p className="text-sm text-muted-foreground">{subUser.email}</p>
-                <p className="text-xs mt-1">
-                  Estado: <span className={subUser.suscripcion_activa ? "text-primary" : "text-destructive"}>{subUser.suscripcion_activa ? "Activa" : "Inactiva"}</span>
-                  {subUser.suscripcion_hasta && subUser.suscripcion_activa && (
-                    <span className="text-muted-foreground"> — hasta {new Date(subUser.suscripcion_hasta).toLocaleDateString("es-ES")}</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs">
+                    Estado: <span className={subUser.suscripcion_activa ? "text-primary" : "text-destructive"}>{subUser.suscripcion_activa ? "Activa" : "Inactiva"}</span>
+                  </span>
+                  {subUser.etiqueta && (
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${TAG_COLORS[subUser.etiqueta] || "bg-muted text-muted-foreground"}`}>
+                      {subUser.etiqueta}
+                    </span>
                   )}
-                </p>
+                </div>
+                {subUser.suscripcion_hasta && subUser.suscripcion_activa && (
+                  <p className="text-xs text-muted-foreground mt-1">Hasta {new Date(subUser.suscripcion_hasta).toLocaleDateString("es-ES")}</p>
+                )}
               </div>
 
               <div>
@@ -226,8 +306,6 @@ const AdminUsers = () => {
                 </div>
                 <Input type="number" value={subDays} onChange={e => setSubDays(e.target.value)} min="1" max="3650" className="mt-2 bg-background border-border w-32" />
               </div>
-
-              <p className="text-xs text-muted-foreground">Útil para regalar acceso a afiliados, influencers o campañas de marketing.</p>
 
               <div className="flex justify-between gap-2">
                 {subUser.suscripcion_activa && (
@@ -261,6 +339,7 @@ const AdminUsers = () => {
                 <div><span className="text-muted-foreground">País:</span> <span>{selectedUser.pais || "—"}</span></div>
                 <div><span className="text-muted-foreground">Peso:</span> <span>{selectedUser.peso_kg ? `${selectedUser.peso_kg} kg` : "—"}</span></div>
                 <div><span className="text-muted-foreground">Altura:</span> <span>{selectedUser.altura_cm ? `${selectedUser.altura_cm} cm` : "—"}</span></div>
+                <div><span className="text-muted-foreground">Etiqueta:</span> <span>{selectedUser.etiqueta || "—"}</span></div>
               </div>
               <div>
                 <h4 className="font-heading font-semibold mb-2">Planes generados ({userPlans.length})</h4>

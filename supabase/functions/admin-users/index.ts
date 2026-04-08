@@ -37,7 +37,7 @@ serve(async (req) => {
     const { action, ...params } = await req.json();
 
     if (action === "create_user") {
-      const { email, password, nombre } = params;
+      const { email, password, nombre, etiqueta, subscribe_days } = params;
       if (!email || !password) throw new Error("Email and password required");
 
       // Create user via admin API
@@ -50,7 +50,28 @@ serve(async (req) => {
 
       if (createError) throw new Error(`Failed to create user: ${createError.message}`);
 
-      return new Response(JSON.stringify({ success: true, user_id: newUser.user.id }), {
+      const userId = newUser.user.id;
+
+      // Update profile with tag and optional subscription
+      const profileUpdate: Record<string, any> = {};
+      if (etiqueta) profileUpdate.etiqueta = etiqueta;
+
+      if (subscribe_days && Number(subscribe_days) > 0) {
+        const until = new Date();
+        until.setDate(until.getDate() + Number(subscribe_days));
+        profileUpdate.suscripcion_activa = true;
+        profileUpdate.suscripcion_hasta = until.toISOString();
+      }
+
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error: updateError } = await supabaseAdmin
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("id", userId);
+        if (updateError) console.error("Profile update error:", updateError.message);
+      }
+
+      return new Response(JSON.stringify({ success: true, user_id: userId }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -77,6 +98,22 @@ serve(async (req) => {
         .eq("id", user_id);
 
       if (updateError) throw new Error(`Failed to update subscription: ${updateError.message}`);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "set_tag") {
+      const { user_id, etiqueta } = params;
+      if (!user_id) throw new Error("user_id required");
+
+      const { error: updateError } = await supabaseAdmin
+        .from("profiles")
+        .update({ etiqueta: etiqueta || null })
+        .eq("id", user_id);
+
+      if (updateError) throw new Error(`Failed to update tag: ${updateError.message}`);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

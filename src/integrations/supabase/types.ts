@@ -115,6 +115,7 @@ export type Database = {
           creado_en: string | null
           dispositivo: string | null
           email: string | null
+          etiqueta: string | null
           fecha_nacimiento: string | null
           foto_perfil: string | null
           id: string
@@ -137,6 +138,7 @@ export type Database = {
           creado_en?: string | null
           dispositivo?: string | null
           email?: string | null
+          etiqueta?: string | null
           fecha_nacimiento?: string | null
           foto_perfil?: string | null
           id: string
@@ -159,6 +161,7 @@ export type Database = {
           creado_en?: string | null
           dispositivo?: string | null
           email?: string | null
+          etiqueta?: string | null
           fecha_nacimiento?: string | null
           foto_perfil?: string | null
           id?: string
