@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Minus, Plus, Upload, Camera, Image, X, Check } from "lucide-react";
 import Logo from "@/components/Logo";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 import {
   proteinasAnimales, proteinasVegetales, lacteos, granos, vegetales, frutas, condimentos,
   goals, alergias, dietas, salud, preferenciasComida, tiemposCocina, equipamiento, mealTimes,
@@ -59,6 +60,7 @@ const FoodCategory = memo(({ title, items, categoryKey, selectedFoods, onToggle,
 const Onboarding = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
+  const { subscriptionEnd } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [recognizing, setRecognizing] = useState(false);
@@ -78,7 +80,7 @@ const Onboarding = () => {
   const [cookingTime, setCookingTime] = useState("");
   const [skillLevel, setSkillLevel] = useState("Principiante");
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
-  const [selectedDays, setSelectedDays] = useState("28");
+  const [selectedDays, setSelectedDays] = useState("auto");
 
   // Body metrics state
   const [bodyWeight, setBodyWeight] = useState("");
@@ -146,13 +148,28 @@ const Onboarding = () => {
     { id: "ayuda-comprar", label: t("onboarding.step1.help"), emoji: "🛒" },
   ];
 
-  const dayOptions = [
-    { id: "auto", label: t("onboarding.step7.auto"), emoji: "✨" },
-    { id: "7", label: `7 ${t("onboarding.step7.days")}`, emoji: "📅" },
-    { id: "14", label: `14 ${t("onboarding.step7.days")}`, emoji: "📅" },
-    { id: "21", label: `21 ${t("onboarding.step7.days")}`, emoji: "📅" },
-    { id: "28", label: `28 ${t("onboarding.step7.days")}`, emoji: "📅" },
-  ];
+  // Calculate max days based on subscription end date
+  const maxSubDays = useMemo(() => {
+    if (!subscriptionEnd) return 28;
+    const end = new Date(subscriptionEnd);
+    const now = new Date();
+    const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(1, Math.min(diff, 28));
+  }, [subscriptionEnd]);
+
+  const dayOptions = useMemo(() => {
+    const allOptions = [
+      { id: "auto", label: t("onboarding.step7.auto"), emoji: "✨" },
+      { id: "7", label: `7 ${t("onboarding.step7.days")}`, emoji: "📅" },
+      { id: "14", label: `14 ${t("onboarding.step7.days")}`, emoji: "📅" },
+      { id: "21", label: `21 ${t("onboarding.step7.days")}`, emoji: "📅" },
+      { id: "28", label: `28 ${t("onboarding.step7.days")}`, emoji: "📅" },
+    ];
+    return allOptions.filter(opt => {
+      if (opt.id === "auto") return true;
+      return parseInt(opt.id) <= maxSubDays;
+    });
+  }, [maxSubDays, t]);
 
   const localGoals = goals.map(g => ({ ...g, label: t(`data.goal.${g.id}`) }));
   const localTimes = tiemposCocina.map(tc => ({ ...tc, label: t(`data.time.${tc.id}`) }));
@@ -257,7 +274,7 @@ const Onboarding = () => {
       }
 
       const ingredientes = [...selectedFoods, ...manualIngredients.split("\n").filter(Boolean)].join(", ");
-      const diasSolicitados = selectedDays === "auto" ? 28 : parseInt(selectedDays);
+      const diasSolicitados = selectedDays === "auto" ? maxSubDays : Math.min(parseInt(selectedDays), maxSubDays);
 
       const bodyMetrics = needsBodyStep ? {
         peso_kg: parseFloat(bodyWeight) || null,
@@ -622,7 +639,7 @@ const Onboarding = () => {
               <div className="card-surface p-4 border-primary/30 text-center">
                 <p className="text-sm text-muted-foreground">{t("onboarding.step7.based")}</p>
                 <p className="mt-1 font-heading text-lg font-bold text-primary">
-                  {t("onboarding.step7.upTo")} {(selectedDays === "auto" ? 28 : parseInt(selectedDays)) * selectedMeals.length} {t("onboarding.step7.uniqueRecipes")}
+                  {t("onboarding.step7.upTo")} {(selectedDays === "auto" ? maxSubDays : parseInt(selectedDays)) * selectedMeals.length} {t("onboarding.step7.uniqueRecipes")}
                 </p>
               </div>
             </div>
@@ -652,7 +669,7 @@ const Onboarding = () => {
               </div>
               {!loading ? (
                 <Button onClick={handleGenerate} className="w-full mt-6 bg-primary text-primary-foreground font-heading font-semibold h-12">
-                  {t("onboarding.generate")} {selectedDays === "auto" ? "28" : selectedDays} {t("onboarding.step7.days")}
+                  {t("onboarding.generate")} {selectedDays === "auto" ? maxSubDays : selectedDays} {t("onboarding.step7.days")}
                 </Button>
               ) : (
                 <div className="mt-6 text-center">
