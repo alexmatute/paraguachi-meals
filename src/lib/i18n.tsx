@@ -236,6 +236,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "profile.notConnected": "No conectado. Próximamente podrás vincular tu cuenta de Telegram.",
     "profile.saved": "Perfil actualizado",
     "profile.saveError": "Error al guardar",
+    "profile.portalError": "Error al abrir el portal de suscripción",
     "profile.photoUpdated": "Foto actualizada",
     "profile.photoError": "Error al subir imagen",
 
@@ -493,6 +494,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "profile.notConnected": "Not connected. Telegram linking coming soon.",
     "profile.saved": "Profile updated",
     "profile.saveError": "Error saving",
+    "profile.portalError": "Error opening subscription portal",
     "profile.photoUpdated": "Photo updated",
     "profile.photoError": "Error uploading image",
 
