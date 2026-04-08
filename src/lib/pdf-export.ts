@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import fallbackLogo from "@/assets/logo-paraguachi.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const BLACK = "#000000";
 const SURFACE = "#111111";
@@ -8,6 +10,33 @@ const AMBER = "#E8A830";
 const WHITE = "#F2F2F2";
 const GRAY = "#888888";
 const WATERMARK = "@paraguachicuisine";
+
+async function loadLogoBase64(): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "logo_url")
+      .maybeSingle();
+    const url = data?.value || fallbackLogo;
+    const resp = await fetch(url, { mode: "cors" });
+    const blob = await resp.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    // fallback: load local asset
+    const resp = await fetch(fallbackLogo);
+    const blob = await resp.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  }
+}
 
 function addWatermark(doc: jsPDF) {
   const w = doc.internal.pageSize.getWidth();
