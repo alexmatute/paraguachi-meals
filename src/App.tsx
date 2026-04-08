@@ -18,6 +18,7 @@ import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminRecipes from "./pages/admin/AdminRecipes";
 import AdminAI from "./pages/admin/AdminAI";
 import AdminConnections from "./pages/admin/AdminConnections";
+import PublicPlanViewer from "./pages/PublicPlanViewer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/plan/:id" element={<PlanViewer />} />
           <Route path="/perfil" element={<Profile />} />
+          <Route path="/ver-plan/:token" element={<PublicPlanViewer />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="usuarios" element={<AdminUsers />} />

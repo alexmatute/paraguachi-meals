@@ -12,7 +12,15 @@ import {
 } from "@/lib/onboarding-data";
 import { supabase } from "@/integrations/supabase/client";
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
+
+const dayOptions = [
+  { id: "auto", label: "Auto (máximo)", emoji: "✨" },
+  { id: "7", label: "7 días", emoji: "📅" },
+  { id: "14", label: "14 días", emoji: "📅" },
+  { id: "21", label: "21 días", emoji: "📅" },
+  { id: "28", label: "28 días", emoji: "📅" },
+];
 
 const inputMethods = [
   { id: "foto-recibo", label: "Foto del Recibo", emoji: "🧾" },
@@ -48,6 +56,9 @@ const Onboarding = () => {
   const [skillLevel, setSkillLevel] = useState("Principiante");
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
 
+  // Step 7 - meal count
+  const [selectedDays, setSelectedDays] = useState("28");
+
   const toggleItem = (list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
     setList(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
   };
@@ -74,8 +85,10 @@ const Onboarding = () => {
 
       const ingredientes = [...selectedFoods, ...manualIngredients.split("\n").filter(Boolean)].join(", ");
 
+      const diasSolicitados = selectedDays === "auto" ? 28 : parseInt(selectedDays);
+
       const { data, error } = await supabase.functions.invoke("generate-plan", {
-        body: { ingredientes, preferencias: prefs, usuario_id: user.id },
+        body: { ingredientes, preferencias: prefs, usuario_id: user.id, dias_solicitados: diasSolicitados },
       });
 
       if (error) throw error;
@@ -250,6 +263,27 @@ const Onboarding = () => {
 
           {step === 7 && (
             <div>
+              <h2 className="font-heading text-lg font-bold mb-4">¿Cuántas comidas quieres preparar?</h2>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {dayOptions.map(opt => (
+                  <button key={opt.id} onClick={() => setSelectedDays(opt.id)}
+                    className={`rounded-xl border p-4 text-center transition-colors ${selectedDays === opt.id ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
+                    <span className="text-xl">{opt.emoji}</span>
+                    <p className="mt-1 text-sm font-medium">{opt.label}</p>
+                  </button>
+                ))}
+              </div>
+              <div className="card-surface p-4 border-primary/30 text-center">
+                <p className="text-sm text-muted-foreground">Basado en tus ingredientes, podemos generar aproximadamente:</p>
+                <p className="mt-1 font-heading text-lg font-bold text-primary">
+                  🍽️ Hasta {(selectedDays === "auto" ? 28 : parseInt(selectedDays)) * selectedMeals.length} recetas únicas
+                </p>
+              </div>
+            </div>
+          )}
+
+          {step === 8 && (
+            <div>
               <h2 className="font-heading text-lg font-bold mb-4">Resumen</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Personas</span><span>{personas}</span></div>
@@ -262,7 +296,7 @@ const Onboarding = () => {
               </div>
               {!loading ? (
                 <Button onClick={handleGenerate} className="w-full mt-6 bg-primary text-primary-foreground font-heading font-semibold h-12">
-                  🚀 Generar mi plan de 28 días
+                  🚀 Generar mi plan de {selectedDays === "auto" ? "28" : selectedDays} días
                 </Button>
               ) : (
                 <div className="mt-6 text-center">
