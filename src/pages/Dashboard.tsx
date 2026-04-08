@@ -3,8 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Plus, Calendar, Loader2, User, Download, Share2, FileText, Lightbulb, MessageCircle } from "lucide-react";
+import { LogOut, Plus, Calendar, Loader2, User, Download, Share2, FileText, Lightbulb, MessageCircle, Shield } from "lucide-react";
 import Logo from "@/components/Logo";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
@@ -29,6 +30,7 @@ interface Profile {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
+  const { isAdmin } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -87,6 +89,12 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             <LangSwitcher />
+            {isAdmin && (
+              <Link to="/admin" className="flex items-center gap-1 rounded-full border border-primary/50 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+                <Shield className="h-3.5 w-3.5" />
+                Admin
+              </Link>
+            )}
             <Link to="/perfil">
               <Avatar className="h-8 w-8 border border-border">
                 <AvatarImage src={profile?.foto_perfil || undefined} />
