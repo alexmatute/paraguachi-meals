@@ -17,28 +17,37 @@ export type Database = {
       planes: {
         Row: {
           creado_en: string | null
+          dias_generados: number | null
           id: string
           ingredientes: string | null
           plan_html: string | null
           plan_json: Json | null
+          public_token: string | null
+          recetas_ids: string[] | null
           semanas: number | null
           usuario_id: string
         }
         Insert: {
           creado_en?: string | null
+          dias_generados?: number | null
           id?: string
           ingredientes?: string | null
           plan_html?: string | null
           plan_json?: Json | null
+          public_token?: string | null
+          recetas_ids?: string[] | null
           semanas?: number | null
           usuario_id: string
         }
         Update: {
           creado_en?: string | null
+          dias_generados?: number | null
           id?: string
           ingredientes?: string | null
           plan_html?: string | null
           plan_json?: Json | null
+          public_token?: string | null
+          recetas_ids?: string[] | null
           semanas?: number | null
           usuario_id?: string
         }
@@ -167,6 +176,53 @@ export type Database = {
           ultima_conexion?: string | null
         }
         Relationships: []
+      }
+      recetas_catalogo: {
+        Row: {
+          creado_en: string | null
+          hash: string | null
+          id: string
+          ingredientes_principales: string[] | null
+          nombre: string
+          objetivo: string | null
+          tipo_proteina: string | null
+          ultima_vez: string | null
+          usuario_id: string
+          veces_generada: number | null
+        }
+        Insert: {
+          creado_en?: string | null
+          hash?: string | null
+          id?: string
+          ingredientes_principales?: string[] | null
+          nombre: string
+          objetivo?: string | null
+          tipo_proteina?: string | null
+          ultima_vez?: string | null
+          usuario_id: string
+          veces_generada?: number | null
+        }
+        Update: {
+          creado_en?: string | null
+          hash?: string | null
+          id?: string
+          ingredientes_principales?: string[] | null
+          nombre?: string
+          objetivo?: string | null
+          tipo_proteina?: string | null
+          ultima_vez?: string | null
+          usuario_id?: string
+          veces_generada?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recetas_catalogo_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sesiones: {
         Row: {
