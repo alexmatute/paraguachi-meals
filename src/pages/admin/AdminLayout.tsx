@@ -50,7 +50,13 @@ const AdminLayout = () => {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-            <div className="mt-auto p-4">
+            <div className="mt-auto p-4 space-y-2">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full"
+              >
+                <ArrowLeft className="h-4 w-4" /> Dashboard
+              </Link>
               <button
                 onClick={async () => {
                   await supabase.auth.signOut();
