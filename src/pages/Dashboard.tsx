@@ -30,6 +30,7 @@ interface Profile {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
+  const { isAdmin } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
