@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Eye, Loader2, UserPlus, Gift, X, Tag } from "lucide-react";
+import { Search, Eye, Loader2, UserPlus, Gift, X, Tag, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -36,6 +37,9 @@ const AdminUsers = () => {
   const [subDays, setSubDays] = useState("30");
   const [settingSub, setSettingSub] = useState(false);
 
+  // Delete user
+  const [deleteUser, setDeleteUser] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
   useEffect(() => { loadUsers(); }, []);
 
   const loadUsers = async () => {
@@ -204,6 +208,9 @@ const AdminUsers = () => {
                       </button>
                       <button onClick={() => viewUser(u)} className="text-primary hover:text-primary/80 p-1" title="Ver perfil">
                         <Eye className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => setDeleteUser(u)} className="text-destructive hover:text-destructive/80 p-1" title="Eliminar usuario">
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
@@ -394,6 +401,44 @@ const AdminUsers = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-heading">¿Eliminar usuario?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente a <strong>{deleteUser?.nombre || deleteUser?.email}</strong> y todos sus datos asociados. No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={async () => {
+                setDeleting(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke("admin-users", {
+                    body: { action: "delete_user", user_id: deleteUser.id },
+                  });
+                  if (error) throw error;
+                  if (data?.error) throw new Error(data.error);
+                  toast.success("Usuario eliminado");
+                  setDeleteUser(null);
+                  await loadUsers();
+                } catch (err: any) {
+                  toast.error(err.message || "Error al eliminar usuario");
+                }
+                setDeleting(false);
+              }}
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
