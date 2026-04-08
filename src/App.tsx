@@ -22,6 +22,7 @@ import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminRecipes from "./pages/admin/AdminRecipes";
 import AdminAI from "./pages/admin/AdminAI";
 import AdminConnections from "./pages/admin/AdminConnections";
+import AdminBranding from "./pages/admin/AdminBranding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="recetas" element={<AdminRecipes />} />
               <Route path="ia" element={<AdminAI />} />
               <Route path="conexiones" element={<AdminConnections />} />
+              <Route path="marca" element={<AdminBranding />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
