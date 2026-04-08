@@ -60,6 +60,7 @@ const FoodCategory = memo(({ title, items, categoryKey, selectedFoods, onToggle,
 const Onboarding = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
+  const { subscriptionEnd } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [recognizing, setRecognizing] = useState(false);
