@@ -77,9 +77,18 @@ const translations: Record<Lang, Record<string, string>> = {
     // Checkout
     "checkout.title": "Activar suscripción",
     "checkout.plan": "Plan mensual — $35/mes",
-    "checkout.stripe": "Checkout con Stripe",
-    "checkout.soon": "La integración de pagos se activará próximamente.",
-    "checkout.continue": "Continuar al onboarding →",
+    "checkout.payButton": "Suscribirme por $35/mes",
+    "checkout.secure": "Pago seguro procesado por Stripe. Cancela cuando quieras.",
+    "checkout.f1": "Planes de 28 días ilimitados",
+    "checkout.f2": "Recetas únicas personalizadas con IA",
+    "checkout.f3": "Listas de compras y guía de meal prep",
+    "checkout.f4": "Exportación HTML y compartir planes",
+    "checkout.error": "Error al procesar el pago: ",
+    "checkout.activeTitle": "¡Suscripción activa!",
+    "checkout.activeDesc": "Tu plan está activo. Comienza a generar tus recetas.",
+    "checkout.goOnboarding": "Ir al onboarding →",
+    "checkout.needAccount": "¿No tienes cuenta?",
+    "checkout.manage": "Gestionar suscripción",
 
     // Onboarding
     "onboarding.title": "Personaliza tu plan",
@@ -306,9 +315,18 @@ const translations: Record<Lang, Record<string, string>> = {
     // Checkout
     "checkout.title": "Activate subscription",
     "checkout.plan": "Monthly plan — $35/month",
-    "checkout.stripe": "Checkout with Stripe",
-    "checkout.soon": "Payment integration coming soon.",
-    "checkout.continue": "Continue to onboarding →",
+    "checkout.payButton": "Subscribe for $35/month",
+    "checkout.secure": "Secure payment processed by Stripe. Cancel anytime.",
+    "checkout.f1": "Unlimited 28-day plans",
+    "checkout.f2": "AI-personalized unique recipes",
+    "checkout.f3": "Shopping lists and meal prep guide",
+    "checkout.f4": "HTML export and plan sharing",
+    "checkout.error": "Payment error: ",
+    "checkout.activeTitle": "Subscription active!",
+    "checkout.activeDesc": "Your plan is active. Start generating your recipes.",
+    "checkout.goOnboarding": "Go to onboarding →",
+    "checkout.needAccount": "Don't have an account?",
+    "checkout.manage": "Manage subscription",
 
     // Onboarding
     "onboarding.title": "Customize your plan",
