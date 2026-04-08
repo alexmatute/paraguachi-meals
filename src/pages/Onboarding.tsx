@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChefHat, Loader2, Minus, Plus, Upload } from "lucide-react";
+import { ChefHat, Loader2, Minus, Plus, Upload, Camera, Image, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   proteinasAnimales, proteinasVegetales, lacteos, granos, vegetales, frutas, condimentos,
@@ -21,6 +21,12 @@ const Onboarding = () => {
   const { t, lang } = useI18n();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [recognizing, setRecognizing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [recognizedIngredients, setRecognizedIngredients] = useState<string[]>([]);
+  const [recognitionNotes, setRecognitionNotes] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [inputMethod, setInputMethod] = useState("");
   const [manualIngredients, setManualIngredients] = useState("");
@@ -64,6 +70,54 @@ const Onboarding = () => {
 
   const toggleItem = (list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
     setList(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
+  };
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(lang === "en" ? "Image too large (max 10MB)" : "Imagen muy grande (máx 10MB)");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setRecognizedIngredients([]);
+    setRecognitionNotes("");
+    setRecognizing(true);
+
+    try {
+      const base64 = await fileToBase64(file);
+      const { data, error } = await supabase.functions.invoke("recognize-ingredients", {
+        body: { image_base64: base64, type: inputMethod, idioma: lang },
+      });
+      if (error) throw error;
+      setRecognizedIngredients(data.ingredientes || []);
+      setRecognitionNotes(data.notas || "");
+    } catch (err: any) {
+      toast.error(lang === "en" ? "Could not recognize ingredients" : "No se pudieron reconocer los ingredientes");
+      console.error(err);
+    } finally {
+      setRecognizing(false);
+    }
+  };
+
+  const clearPhoto = () => {
+    setPreviewUrl(null);
+    setRecognizedIngredients([]);
+    setRecognitionNotes("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
   const handleGenerate = async () => {
@@ -158,9 +212,65 @@ const Onboarding = () => {
                 ))}
               </div>
               {(inputMethod === "foto-recibo" || inputMethod === "foto-nevera") && (
-                <div className="mt-4 rounded-xl border-2 border-dashed border-border p-8 text-center">
-                  <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <p className="mt-2 text-sm text-muted-foreground">{t("onboarding.step1.upload")}</p>
+                <div className="mt-4 space-y-4">
+                  <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleFileSelect} />
+                  <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
+
+                  {!previewUrl ? (
+                    <div className="rounded-xl border-2 border-dashed border-border p-8 text-center space-y-4">
+                      <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">{t("onboarding.step1.upload")}</p>
+                      <div className="flex gap-3 justify-center">
+                        <Button variant="outline" size="sm" onClick={() => cameraInputRef.current?.click()}>
+                          <Camera className="h-4 w-4 mr-1" /> {t("onboarding.step1.camera")}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                          <Image className="h-4 w-4 mr-1" /> {t("onboarding.step1.gallery")}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="relative rounded-xl overflow-hidden border border-border">
+                        <img src={previewUrl} alt="Preview" className="w-full max-h-64 object-cover" />
+                        <button onClick={clearPhoto} className="absolute top-2 right-2 rounded-full bg-background/80 p-1.5 hover:bg-background">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {recognizing && (
+                        <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" /> {t("onboarding.step1.analyzing")}
+                        </div>
+                      )}
+
+                      {recognizedIngredients.length > 0 && (
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                            <Check className="h-4 w-4" /> {t("onboarding.step1.detected")} ({recognizedIngredients.length})
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {recognizedIngredients.map((ing, i) => (
+                              <span key={i} className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs text-primary font-medium">
+                                {ing}
+                              </span>
+                            ))}
+                          </div>
+                          {recognitionNotes && <p className="text-xs text-muted-foreground">{recognitionNotes}</p>}
+                          <Button size="sm" variant="outline" onClick={() => {
+                            setManualIngredients(prev => {
+                              const existing = prev.trim();
+                              const newOnes = recognizedIngredients.join("\n");
+                              return existing ? `${existing}\n${newOnes}` : newOnes;
+                            });
+                            toast.success(t("onboarding.step1.added"));
+                          }}>
+                            {t("onboarding.step1.addAll")}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               {(inputMethod === "lista-manual" || inputMethod === "ayuda-comprar") && (
