@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChefHat, Camera, Loader2, ArrowLeft, Shield, MessageCircle } from "lucide-react";
+import { ChefHat, Camera, Loader2, ArrowLeft, Shield, MessageCircle, CreditCard, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { alergias, dietas, salud, preferenciasComida } from "@/lib/onboarding-data";
 import { useI18n } from "@/lib/i18n";
@@ -147,15 +147,32 @@ const Profile = () => {
         </div>
 
         <div className="card-surface p-6">
-          <h2 className="font-heading text-base font-bold mb-4">{t("profile.subscription")}</h2>
+          <h2 className="font-heading text-base font-bold mb-4 flex items-center gap-2"><CreditCard className="h-4 w-4" /> {t("profile.subscription")}</h2>
           <div className="flex items-center gap-3 mb-4">
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${profile.suscripcion_activa ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
               {profile.suscripcion_activa ? t("common.active").toUpperCase() : t("common.inactive").toUpperCase()}
             </span>
-            <span className="text-sm text-muted-foreground">$35.00/{lang === "es" ? "mes" : "month"}</span>
           </div>
           {profile.suscripcion_hasta && (
             <p className="text-xs text-muted-foreground mb-4">{t("profile.nextCharge")} {new Date(profile.suscripcion_hasta).toLocaleDateString(locale)}</p>
+          )}
+          {profile.suscripcion_activa && (
+            <Button
+              variant="outline"
+              className="border-border text-foreground"
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke("customer-portal");
+                  if (error) throw error;
+                  if (data?.url) window.open(data.url, "_blank");
+                } catch {
+                  toast.error(t("profile.portalError"));
+                }
+              }}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {t("checkout.manage")}
+            </Button>
           )}
         </div>
 
