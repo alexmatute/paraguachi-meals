@@ -7,6 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const PRICES: Record<string, string> = {
+  weekly: "price_1TJpGjQ7CbxRVH2NmGdbTuW8",
+  biweekly: "price_1TJpIsQ7CbxRVH2NezHNDClv",
+  monthly: "price_1TJpCLQ7CbxRVH2N9E0LKUMR",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -22,19 +28,22 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
+    const body = await req.json().catch(() => ({}));
+    const plan = body.plan || "monthly";
+    const priceId = PRICES[plan];
+    if (!priceId) throw new Error("Invalid plan");
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    }
+    if (customers.data.length > 0) customerId = customers.data[0].id;
 
     const origin = req.headers.get("origin") || "https://id-preview--1d4bcd38-c8d0-4bc9-a282-a785a4c149e0.lovable.app";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: "price_1TJpCLQ7CbxRVH2N9E0LKUMR", quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout`,
@@ -42,7 +51,6 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
     });
   } catch (error) {
     console.error("create-checkout error:", error);
