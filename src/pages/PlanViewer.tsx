@@ -93,7 +93,7 @@ const PlanViewer = () => {
               onClick={() => {
                 setExportingPdf(true);
                 try {
-                  const pdf = generatePlanPDF(planData, lang);
+                  const pdf = await generatePlanPDF(planData, lang);
                   pdf.save(`plan-paraguachi-${(id || "").substring(0, 8)}.pdf`);
                   toast.success(t("plan.pdfDownloaded"));
                 } catch { toast.error(t("plan.pdfError")); }
