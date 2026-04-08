@@ -9,7 +9,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { ingredientes, preferencias, usuario_id, dias_solicitados } = await req.json();
+    const { ingredientes, preferencias, usuario_id, dias_solicitados, idioma } = await req.json();
+    const lang = idioma === "en" ? "en" : "es";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -36,6 +37,7 @@ serve(async (req) => {
 
     const systemPrompt = `Eres Chef AI de Paraguachi Meals Prep. 
 Genera planes de comida personalizados.
+IDIOMA: Responde TODO en ${lang === "en" ? "inglés" : "español"}, incluyendo nombres de recetas, instrucciones y consejos.
 Responde SIEMPRE en formato JSON válido con esta estructura exacta:
 {
   "analisis": {
