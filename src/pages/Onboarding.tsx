@@ -80,7 +80,7 @@ const Onboarding = () => {
   const [cookingTime, setCookingTime] = useState("");
   const [skillLevel, setSkillLevel] = useState("Principiante");
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
-  const [selectedDays, setSelectedDays] = useState("28");
+  const [selectedDays, setSelectedDays] = useState("auto");
 
   // Body metrics state
   const [bodyWeight, setBodyWeight] = useState("");
