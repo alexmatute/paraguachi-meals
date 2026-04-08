@@ -120,6 +120,18 @@ serve(async (req) => {
       });
     }
 
+    if (action === "delete_user") {
+      const { user_id } = params;
+      if (!user_id) throw new Error("user_id required");
+
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+      if (deleteError) throw new Error(`Failed to delete user: ${deleteError.message}`);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     throw new Error(`Unknown action: ${action}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Eye, Loader2, UserPlus, Gift, X, Tag } from "lucide-react";
+import { Search, Eye, Loader2, UserPlus, Gift, X, Tag, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -36,6 +37,9 @@ const AdminUsers = () => {
   const [subDays, setSubDays] = useState("30");
   const [settingSub, setSettingSub] = useState(false);
 
+  // Delete user
+  const [deleteUser, setDeleteUser] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
   useEffect(() => { loadUsers(); }, []);
 
   const loadUsers = async () => {
@@ -204,6 +208,9 @@ const AdminUsers = () => {
                       </button>
                       <button onClick={() => viewUser(u)} className="text-primary hover:text-primary/80 p-1" title="Ver perfil">
                         <Eye className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => setDeleteUser(u)} className="text-destructive hover:text-destructive/80 p-1" title="Eliminar usuario">
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
