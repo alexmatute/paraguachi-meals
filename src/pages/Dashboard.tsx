@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ChefHat, LogOut, Plus, Calendar, Loader2 } from "lucide-react";
+import { ChefHat, LogOut, Plus, Calendar, Loader2, User, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 interface Plan {
@@ -52,6 +53,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline text-sm text-muted-foreground">Hola, {userName}</span>
+            <Link to="/perfil" className="text-muted-foreground hover:text-foreground"><User className="h-4 w-4" /></Link>
             <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary">Activa</span>
             <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
               <LogOut className="h-4 w-4" />
