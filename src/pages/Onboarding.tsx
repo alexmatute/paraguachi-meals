@@ -72,6 +72,54 @@ const Onboarding = () => {
     setList(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
   };
 
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(lang === "en" ? "Image too large (max 10MB)" : "Imagen muy grande (máx 10MB)");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setRecognizedIngredients([]);
+    setRecognitionNotes("");
+    setRecognizing(true);
+
+    try {
+      const base64 = await fileToBase64(file);
+      const { data, error } = await supabase.functions.invoke("recognize-ingredients", {
+        body: { image_base64: base64, type: inputMethod, idioma: lang },
+      });
+      if (error) throw error;
+      setRecognizedIngredients(data.ingredientes || []);
+      setRecognitionNotes(data.notas || "");
+    } catch (err: any) {
+      toast.error(lang === "en" ? "Could not recognize ingredients" : "No se pudieron reconocer los ingredientes");
+      console.error(err);
+    } finally {
+      setRecognizing(false);
+    }
+  };
+
+  const clearPhoto = () => {
+    setPreviewUrl(null);
+    setRecognizedIngredients([]);
+    setRecognitionNotes("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
+
   const handleGenerate = async () => {
     setLoading(true);
     try {
