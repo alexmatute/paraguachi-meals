@@ -158,7 +158,18 @@ const Onboarding = () => {
     }
   };
 
-  const FoodCategory = ({ title, items }: { title: string; items: string[] }) => (
+  const [customInputs, setCustomInputs] = useState<Record<string, string>>({});
+
+  const addCustomItem = (category: string) => {
+    const value = (customInputs[category] || "").trim();
+    if (!value) return;
+    if (!selectedFoods.includes(value)) {
+      setSelectedFoods(prev => [...prev, value]);
+    }
+    setCustomInputs(prev => ({ ...prev, [category]: "" }));
+  };
+
+  const FoodCategory = ({ title, items, categoryKey }: { title: string; items: string[]; categoryKey: string }) => (
     <div className="mb-4">
       <h4 className="text-sm font-semibold text-primary mb-2">{title}</h4>
       <div className="flex flex-wrap gap-2">
@@ -168,6 +179,18 @@ const Onboarding = () => {
             {item}
           </label>
         ))}
+      </div>
+      <div className="mt-2 flex gap-2">
+        <Input
+          placeholder={`${t("onboarding.step2.addOther")}…`}
+          value={customInputs[categoryKey] || ""}
+          onChange={e => setCustomInputs(prev => ({ ...prev, [categoryKey]: e.target.value }))}
+          onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustomItem(categoryKey))}
+          className="h-8 text-xs bg-background border-border flex-1"
+        />
+        <Button size="sm" variant="outline" className="h-8 text-xs px-3" onClick={() => addCustomItem(categoryKey)}>
+          <Plus className="h-3 w-3 mr-1" /> {t("onboarding.step2.add")}
+        </Button>
       </div>
     </div>
   );
@@ -283,13 +306,13 @@ const Onboarding = () => {
           {step === 2 && (
             <div className="max-h-[60vh] overflow-y-auto pr-2">
               <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step2.title")}</h2>
-              <FoodCategory title={t("onboarding.step2.animalProteins")} items={proteinasAnimales} />
-              <FoodCategory title={t("onboarding.step2.plantProteins")} items={proteinasVegetales} />
-              <FoodCategory title={t("onboarding.step2.dairy")} items={lacteos} />
-              <FoodCategory title={t("onboarding.step2.grains")} items={granos} />
-              <FoodCategory title={t("onboarding.step2.veggies")} items={vegetales} />
-              <FoodCategory title={t("onboarding.step2.fruits")} items={frutas} />
-              <FoodCategory title={t("onboarding.step2.spices")} items={condimentos} />
+              <FoodCategory title={t("onboarding.step2.animalProteins")} items={proteinasAnimales} categoryKey="proteinas" />
+              <FoodCategory title={t("onboarding.step2.plantProteins")} items={proteinasVegetales} categoryKey="protVeg" />
+              <FoodCategory title={t("onboarding.step2.dairy")} items={lacteos} categoryKey="lacteos" />
+              <FoodCategory title={t("onboarding.step2.grains")} items={granos} categoryKey="granos" />
+              <FoodCategory title={t("onboarding.step2.veggies")} items={vegetales} categoryKey="vegetales" />
+              <FoodCategory title={t("onboarding.step2.fruits")} items={frutas} categoryKey="frutas" />
+              <FoodCategory title={t("onboarding.step2.spices")} items={condimentos} categoryKey="condimentos" />
             </div>
           )}
 
