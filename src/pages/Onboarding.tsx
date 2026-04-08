@@ -158,7 +158,18 @@ const Onboarding = () => {
     }
   };
 
-  const FoodCategory = ({ title, items }: { title: string; items: string[] }) => (
+  const [customInputs, setCustomInputs] = useState<Record<string, string>>({});
+
+  const addCustomItem = (category: string) => {
+    const value = (customInputs[category] || "").trim();
+    if (!value) return;
+    if (!selectedFoods.includes(value)) {
+      setSelectedFoods(prev => [...prev, value]);
+    }
+    setCustomInputs(prev => ({ ...prev, [category]: "" }));
+  };
+
+  const FoodCategory = ({ title, items, categoryKey }: { title: string; items: string[]; categoryKey: string }) => (
     <div className="mb-4">
       <h4 className="text-sm font-semibold text-primary mb-2">{title}</h4>
       <div className="flex flex-wrap gap-2">
@@ -168,6 +179,18 @@ const Onboarding = () => {
             {item}
           </label>
         ))}
+      </div>
+      <div className="mt-2 flex gap-2">
+        <Input
+          placeholder={`${t("onboarding.step2.addOther")}…`}
+          value={customInputs[categoryKey] || ""}
+          onChange={e => setCustomInputs(prev => ({ ...prev, [categoryKey]: e.target.value }))}
+          onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustomItem(categoryKey))}
+          className="h-8 text-xs bg-background border-border flex-1"
+        />
+        <Button size="sm" variant="outline" className="h-8 text-xs px-3" onClick={() => addCustomItem(categoryKey)}>
+          <Plus className="h-3 w-3 mr-1" /> {t("onboarding.step2.add")}
+        </Button>
       </div>
     </div>
   );
