@@ -424,6 +424,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "onboarding.step2.veggies": "🥬 Vegetables",
     "onboarding.step2.fruits": "🍎 Fruits",
     "onboarding.step2.spices": "🧂 Spices & Condiments",
+    "onboarding.step2.addOther": "Add other",
+    "onboarding.step2.add": "Add",
     "onboarding.step3.title": "How many people?",
     "onboarding.step3.meals": "Meals of the day",
     "onboarding.step4.title": "What's your goal?",
