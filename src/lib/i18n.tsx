@@ -75,9 +75,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "register.error": "Error al registrarse: ",
 
     // Checkout
-    "checkout.title": "Activar suscripción",
+    "checkout.title": "Elige tu plan",
+    "checkout.subtitle": "Cancela cuando quieras. Sin compromiso.",
     "checkout.plan": "Plan mensual — $35/mes",
-    "checkout.payButton": "Suscribirme por $35/mes",
+    "checkout.payButton": "Suscribirme ahora",
     "checkout.secure": "Pago seguro procesado por Stripe. Cancela cuando quieras.",
     "checkout.f1": "Planes de 28 días ilimitados",
     "checkout.f2": "Recetas únicas personalizadas con IA",
@@ -89,6 +90,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "checkout.goOnboarding": "Ir al onboarding →",
     "checkout.needAccount": "¿No tienes cuenta?",
     "checkout.manage": "Gestionar suscripción",
+    "checkout.popular": "Popular",
+    "checkout.priceWeekly": "$10",
+    "checkout.periodWeekly": "por semana",
+    "checkout.priceBiweekly": "$20",
+    "checkout.periodBiweekly": "cada 2 semanas",
+    "checkout.priceMonthly": "$35",
+    "checkout.periodMonthly": "por mes",
 
     // Onboarding
     "onboarding.title": "Personaliza tu plan",
@@ -313,9 +321,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "register.error": "Registration error: ",
 
     // Checkout
-    "checkout.title": "Activate subscription",
+    "checkout.title": "Choose your plan",
+    "checkout.subtitle": "Cancel anytime. No commitment.",
     "checkout.plan": "Monthly plan — $35/month",
-    "checkout.payButton": "Subscribe for $35/month",
+    "checkout.payButton": "Subscribe now",
     "checkout.secure": "Secure payment processed by Stripe. Cancel anytime.",
     "checkout.f1": "Unlimited 28-day plans",
     "checkout.f2": "AI-personalized unique recipes",
@@ -327,6 +336,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "checkout.goOnboarding": "Go to onboarding →",
     "checkout.needAccount": "Don't have an account?",
     "checkout.manage": "Manage subscription",
+    "checkout.popular": "Popular",
+    "checkout.priceWeekly": "$10",
+    "checkout.periodWeekly": "per week",
+    "checkout.priceBiweekly": "$20",
+    "checkout.periodBiweekly": "every 2 weeks",
+    "checkout.priceMonthly": "$35",
+    "checkout.periodMonthly": "per month",
 
     // Onboarding
     "onboarding.title": "Customize your plan",
