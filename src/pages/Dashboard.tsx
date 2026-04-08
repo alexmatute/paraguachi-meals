@@ -89,6 +89,12 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             <LangSwitcher />
+            {isAdmin && (
+              <Link to="/admin" className="flex items-center gap-1 rounded-full border border-primary/50 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+                <Shield className="h-3.5 w-3.5" />
+                Admin
+              </Link>
+            )}
             <Link to="/perfil">
               <Avatar className="h-8 w-8 border border-border">
                 <AvatarImage src={profile?.foto_perfil || undefined} />
