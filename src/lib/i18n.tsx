@@ -138,6 +138,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "onboarding.step2.veggies": "🥬 Vegetales",
     "onboarding.step2.fruits": "🍎 Frutas",
     "onboarding.step2.spices": "🧂 Condimentos",
+    "onboarding.step2.addOther": "Agregar otro",
+    "onboarding.step2.add": "Agregar",
     "onboarding.step3.title": "¿Para cuántas personas?",
     "onboarding.step3.meals": "Comidas del día",
     "onboarding.step4.title": "¿Cuál es tu objetivo?",
