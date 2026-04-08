@@ -209,14 +209,12 @@ const Onboarding = () => {
 
       // Save body metrics to profile if provided
       if (needsBodyStep && bodyWeight) {
-        const profileUpdate: Record<string, any> = {};
-        if (bodyWeight) profileUpdate.peso_kg = parseFloat(bodyWeight);
-        if (bodyHeight) profileUpdate.altura_cm = parseFloat(bodyHeight);
-        if (bodyAge) {
-          const birthYear = new Date().getFullYear() - parseInt(bodyAge);
-          profileUpdate.fecha_nacimiento = `${birthYear}-01-01`;
-        }
-        await supabase.from("profiles").update(profileUpdate).eq("id", user.id);
+        const birthYear = bodyAge ? new Date().getFullYear() - parseInt(bodyAge) : null;
+        await supabase.from("profiles").update({
+          peso_kg: parseFloat(bodyWeight) || null,
+          altura_cm: bodyHeight ? parseFloat(bodyHeight) : null,
+          fecha_nacimiento: birthYear ? `${birthYear}-01-01` : null,
+        }).eq("id", user.id);
       }
 
       const ingredientes = [...selectedFoods, ...manualIngredients.split("\n").filter(Boolean)].join(", ");
