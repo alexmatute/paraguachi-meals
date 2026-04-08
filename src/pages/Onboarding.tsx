@@ -306,13 +306,13 @@ const Onboarding = () => {
           {step === 2 && (
             <div className="max-h-[60vh] overflow-y-auto pr-2">
               <h2 className="font-heading text-lg font-bold mb-4">{t("onboarding.step2.title")}</h2>
-              <FoodCategory title={t("onboarding.step2.animalProteins")} items={proteinasAnimales} />
-              <FoodCategory title={t("onboarding.step2.plantProteins")} items={proteinasVegetales} />
-              <FoodCategory title={t("onboarding.step2.dairy")} items={lacteos} />
-              <FoodCategory title={t("onboarding.step2.grains")} items={granos} />
-              <FoodCategory title={t("onboarding.step2.veggies")} items={vegetales} />
-              <FoodCategory title={t("onboarding.step2.fruits")} items={frutas} />
-              <FoodCategory title={t("onboarding.step2.spices")} items={condimentos} />
+              <FoodCategory title={t("onboarding.step2.animalProteins")} items={proteinasAnimales} categoryKey="proteinas" />
+              <FoodCategory title={t("onboarding.step2.plantProteins")} items={proteinasVegetales} categoryKey="protVeg" />
+              <FoodCategory title={t("onboarding.step2.dairy")} items={lacteos} categoryKey="lacteos" />
+              <FoodCategory title={t("onboarding.step2.grains")} items={granos} categoryKey="granos" />
+              <FoodCategory title={t("onboarding.step2.veggies")} items={vegetales} categoryKey="vegetales" />
+              <FoodCategory title={t("onboarding.step2.fruits")} items={frutas} categoryKey="frutas" />
+              <FoodCategory title={t("onboarding.step2.spices")} items={condimentos} categoryKey="condimentos" />
             </div>
           )}
 
