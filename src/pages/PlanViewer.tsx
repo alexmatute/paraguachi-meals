@@ -90,10 +90,10 @@ const PlanViewer = () => {
               {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} HTML
             </Button>
             <Button variant="outline" size="sm" disabled={exportingPdf} className="gap-1 border-border text-xs"
-              onClick={() => {
+              onClick={async () => {
                 setExportingPdf(true);
                 try {
-                  const pdf = generatePlanPDF(planData, lang);
+                  const pdf = await generatePlanPDF(planData, lang);
                   pdf.save(`plan-paraguachi-${(id || "").substring(0, 8)}.pdf`);
                   toast.success(t("plan.pdfDownloaded"));
                 } catch { toast.error(t("plan.pdfError")); }

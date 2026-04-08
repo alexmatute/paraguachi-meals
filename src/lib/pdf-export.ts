@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import fallbackLogo from "@/assets/logo-paraguachi.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const BLACK = "#000000";
 const SURFACE = "#111111";
@@ -8,6 +10,33 @@ const AMBER = "#E8A830";
 const WHITE = "#F2F2F2";
 const GRAY = "#888888";
 const WATERMARK = "@paraguachicuisine";
+
+async function loadLogoBase64(): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "logo_url")
+      .maybeSingle();
+    const url = data?.value || fallbackLogo;
+    const resp = await fetch(url, { mode: "cors" });
+    const blob = await resp.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    // fallback: load local asset
+    const resp = await fetch(fallbackLogo);
+    const blob = await resp.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  }
+}
 
 function addWatermark(doc: jsPDF) {
   const w = doc.internal.pageSize.getWidth();
@@ -29,13 +58,16 @@ function addFooter(doc: jsPDF, page: number, total: number) {
   doc.text(`${page} / ${total}`, w - 15, h - 10, { align: "right" });
 }
 
-export function generatePlanPDF(planData: any, lang: "es" | "en" = "es") {
+export async function generatePlanPDF(planData: any, lang: "es" | "en" = "es") {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
   const t = (es: string, en: string) => (lang === "es" ? es : en);
   const weeks = planData.semanas || [];
   const analysis = planData.analisis;
+
+  // Load logo
+  const logoBase64 = await loadLogoBase64();
 
   // ───── COVER PAGE ─────
   doc.setFillColor(BLACK);
@@ -46,12 +78,13 @@ export function generatePlanPDF(planData: any, lang: "es" | "en" = "es") {
   doc.setFillColor(GREEN);
   doc.rect(0, 0, w, 4, "F");
 
-  // Logo icon (chef hat silhouette via circle)
-  doc.setFillColor(GREEN);
-  doc.circle(w / 2, 75, 18, "F");
-  doc.setFontSize(26);
-  doc.setTextColor(BLACK);
-  doc.text("🍽", w / 2, 80, { align: "center" });
+  // Logo image
+  try {
+    const logoSize = 36;
+    doc.addImage(logoBase64, "PNG", w / 2 - logoSize / 2, 57, logoSize, logoSize);
+  } catch {
+    // silently skip if image fails
+  }
 
   // Title
   doc.setFontSize(32);
