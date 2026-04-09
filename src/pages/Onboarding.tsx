@@ -307,6 +307,21 @@ const Onboarding = () => {
         tipo_dieta: dietType,
         imc: bmi ? Math.round(bmi * 10) / 10 : null,
         tdee: tdee,
+        // Clinical fields
+        tipo_diabetes: tipoDiabetes || null,
+        usa_insulina: usaInsulina,
+        hba1c: hba1c ? parseFloat(hba1c) : null,
+        enfermedad_renal: enfermedadRenal,
+        presion_sistolica: presionSistolica ? parseInt(presionSistolica) : null,
+        presion_diastolica: presionDiastolica ? parseInt(presionDiastolica) : null,
+        meta_sodio: metaSodio,
+        medicamentos,
+        resistencia_insulina: resistenciaInsulina || null,
+        horas_sueno: parseInt(horasSueno) || 7,
+        nivel_estres: nivelEstres,
+        grasa_corporal: grasaCorporal ? parseFloat(grasaCorporal) : null,
+        cintura_cm: cinturaCm ? parseFloat(cinturaCm) : null,
+        cadera_cm: caderaCm ? parseFloat(caderaCm) : null,
       } : null;
 
       const { data, error } = await supabase.functions.invoke("generate-plan", {
