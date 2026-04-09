@@ -91,14 +91,35 @@ const Onboarding = () => {
   const [goalWeight, setGoalWeight] = useState("");
   const [dietType, setDietType] = useState<"kcal" | "portion">("kcal");
 
-  // Dynamic steps: insert body step after goal if goal is body-related
+  // Clinical fields
+  const [tipoDiabetes, setTipoDiabetes] = useState("");
+  const [usaInsulina, setUsaInsulina] = useState(false);
+  const [hba1c, setHba1c] = useState("");
+  const [enfermedadRenal, setEnfermedadRenal] = useState(false);
+  const [presionSistolica, setPresionSistolica] = useState("");
+  const [presionDiastolica, setPresionDiastolica] = useState("");
+  const [metaSodio, setMetaSodio] = useState("estandar");
+  const [medicamentos, setMedicamentos] = useState<string[]>([]);
+  const [medInput, setMedInput] = useState("");
+  const [resistenciaInsulina, setResistenciaInsulina] = useState("");
+  const [horasSueno, setHorasSueno] = useState("7");
+  const [nivelEstres, setNivelEstres] = useState("medio");
+  const [grasaCorporal, setGrasaCorporal] = useState("");
+  const [cinturaCm, setCinturaCm] = useState("");
+  const [caderaCm, setCaderaCm] = useState("");
+  const [brazoCm, setBrazoCm] = useState("");
+
+  // Dynamic steps
   const needsBodyStep = BODY_GOALS.includes(selectedGoal);
+  const hasClinicalConditions = restrictions.some(r => r.includes("iabét") || r.includes("iabet") || r.includes("sodio") || r.includes("colesterol"));
   const steps = useMemo(() => {
     const base = ["input", "foods", "household", "goal"];
     if (needsBodyStep) base.push("body");
-    base.push("restrictions", "kitchen", "days", "summary");
+    base.push("restrictions");
+    if (hasClinicalConditions) base.push("clinical");
+    base.push("kitchen", "days", "summary");
     return base;
-  }, [needsBodyStep]);
+  }, [needsBodyStep, hasClinicalConditions]);
   const totalSteps = steps.length;
   const currentStepId = steps[step - 1];
 
@@ -250,7 +271,7 @@ const Onboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error(t("onboarding.loginRequired")); setLoading(false); return; }
 
-      const prefs = {
+      const prefs: any = {
         usuario_id: user.id,
         personas,
         comidas: selectedMeals,
@@ -260,6 +281,29 @@ const Onboarding = () => {
         nivel_culinario: skillLevel,
         equipamiento: selectedEquipment,
       };
+
+      // Add clinical fields
+      if (needsBodyStep && bodyWeight) {
+        prefs.peso_kg = parseFloat(bodyWeight) || null;
+        prefs.altura_cm = parseFloat(bodyHeight) || null;
+        prefs.edad = parseInt(bodyAge) || null;
+        prefs.sexo = bodySex === "male" ? "M" : "F";
+      }
+      if (tipoDiabetes) prefs.tipo_diabetes = tipoDiabetes;
+      if (usaInsulina) prefs.usa_insulina = true;
+      if (hba1c) prefs.hba1c = parseFloat(hba1c);
+      if (enfermedadRenal) prefs.enfermedad_renal = true;
+      if (presionSistolica) prefs.presion_sistolica = parseInt(presionSistolica);
+      if (presionDiastolica) prefs.presion_diastolica = parseInt(presionDiastolica);
+      if (metaSodio !== "estandar") prefs.meta_sodio = metaSodio;
+      if (medicamentos.length > 0) prefs.medicamentos = medicamentos;
+      if (resistenciaInsulina) prefs.resistencia_insulina = resistenciaInsulina;
+      prefs.horas_sueno = parseInt(horasSueno) || 7;
+      prefs.nivel_estres = nivelEstres;
+      if (grasaCorporal) prefs.grasa_corporal = parseFloat(grasaCorporal);
+      if (cinturaCm) prefs.cintura_cm = parseFloat(cinturaCm);
+      if (caderaCm) prefs.cadera_cm = parseFloat(caderaCm);
+      if (brazoCm) prefs.brazo_cm = parseFloat(brazoCm);
 
       await supabase.from("preferencias").upsert(prefs, { onConflict: "usuario_id" });
 
@@ -286,6 +330,21 @@ const Onboarding = () => {
         tipo_dieta: dietType,
         imc: bmi ? Math.round(bmi * 10) / 10 : null,
         tdee: tdee,
+        // Clinical fields
+        tipo_diabetes: tipoDiabetes || null,
+        usa_insulina: usaInsulina,
+        hba1c: hba1c ? parseFloat(hba1c) : null,
+        enfermedad_renal: enfermedadRenal,
+        presion_sistolica: presionSistolica ? parseInt(presionSistolica) : null,
+        presion_diastolica: presionDiastolica ? parseInt(presionDiastolica) : null,
+        meta_sodio: metaSodio,
+        medicamentos,
+        resistencia_insulina: resistenciaInsulina || null,
+        horas_sueno: parseInt(horasSueno) || 7,
+        nivel_estres: nivelEstres,
+        grasa_corporal: grasaCorporal ? parseFloat(grasaCorporal) : null,
+        cintura_cm: cinturaCm ? parseFloat(cinturaCm) : null,
+        cadera_cm: caderaCm ? parseFloat(caderaCm) : null,
       } : null;
 
       const { data, error } = await supabase.functions.invoke("generate-plan", {
@@ -602,6 +661,178 @@ const Onboarding = () => {
               <TagToggle items={salud} selected={restrictions} setSelected={setRestrictions} />
               <h3 className="text-sm font-semibold text-primary mb-2 mt-4">{t("onboarding.step5.prefs")}</h3>
               <TagToggle items={preferenciasComida} selected={restrictions} setSelected={setRestrictions} />
+
+              {/* Disclaimer on health step */}
+              <div className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">⚠️ {t("footer.disclaimer")}</p>
+              </div>
+            </div>
+          )}
+
+          {currentStepId === "clinical" && (
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div>
+                <h2 className="font-heading text-lg font-bold">{t("onboarding.clinical.title")}</h2>
+                <p className="text-xs text-muted-foreground mt-1">{t("onboarding.clinical.subtitle")}</p>
+              </div>
+
+              {/* Diabetes */}
+              {restrictions.some(r => r.includes("iabét") || r.includes("iabet")) && (
+                <div className="space-y-3 rounded-xl border border-border p-4">
+                  <h3 className="text-sm font-semibold text-primary">🩸 {t("onboarding.clinical.diabetesType")}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: "pre", label: t("onboarding.clinical.diabetesPre") },
+                      { id: "1", label: t("onboarding.clinical.diabetes1") },
+                      { id: "2", label: t("onboarding.clinical.diabetes2") },
+                    ].map(opt => (
+                      <button key={opt.id} onClick={() => setTipoDiabetes(opt.id)}
+                        className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${tipoDiabetes === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.insulin")}</label>
+                      <div className="flex gap-2 mt-1">
+                        <button onClick={() => setUsaInsulina(true)} className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${usaInsulina ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                          {t("onboarding.clinical.yes")}
+                        </button>
+                        <button onClick={() => setUsaInsulina(false)} className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${!usaInsulina ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                          {t("onboarding.clinical.no")}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.hba1c")}</label>
+                      <Input type="number" step="0.1" value={hba1c} onChange={e => setHba1c(e.target.value)} placeholder="6.5" className="mt-1 h-9 text-xs bg-background border-border" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.renalDisease")}</label>
+                    <div className="flex gap-2 mt-1">
+                      <button onClick={() => setEnfermedadRenal(true)} className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${enfermedadRenal ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                        {t("onboarding.clinical.yes")}
+                      </button>
+                      <button onClick={() => setEnfermedadRenal(false)} className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${!enfermedadRenal ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                        {t("onboarding.clinical.no")}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.insulinResistance")}</label>
+                    <div className="flex gap-2 mt-1">
+                      {[
+                        { id: "si", label: t("onboarding.clinical.irYes") },
+                        { id: "no", label: t("onboarding.clinical.irNo") },
+                        { id: "nosabe", label: t("onboarding.clinical.irUnknown") },
+                      ].map(opt => (
+                        <button key={opt.id} onClick={() => setResistenciaInsulina(opt.id)}
+                          className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${resistenciaInsulina === opt.id ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Hypertension */}
+              {restrictions.some(r => r.includes("sodio")) && (
+                <div className="space-y-3 rounded-xl border border-border p-4">
+                  <h3 className="text-sm font-semibold text-primary">❤️ {t("onboarding.clinical.bloodPressure")}</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.systolic")}</label>
+                      <Input type="number" value={presionSistolica} onChange={e => setPresionSistolica(e.target.value)} placeholder="120" className="mt-1 h-9 text-xs bg-background border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.diastolic")}</label>
+                      <Input type="number" value={presionDiastolica} onChange={e => setPresionDiastolica(e.target.value)} placeholder="80" className="mt-1 h-9 text-xs bg-background border-border" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.sodiumGoal")}</label>
+                    <div className="flex gap-2 mt-1">
+                      <button onClick={() => setMetaSodio("estandar")} className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${metaSodio === "estandar" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                        {t("onboarding.clinical.sodiumStandard")}
+                      </button>
+                      <button onClick={() => setMetaSodio("estricto")} className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${metaSodio === "estricto" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+                        {t("onboarding.clinical.sodiumStrict")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Medications */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.medications")}</label>
+                <div className="flex gap-2">
+                  <Input value={medInput} onChange={e => setMedInput(e.target.value)} placeholder={t("onboarding.clinical.medicationsPlaceholder")}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (medInput.trim()) { setMedicamentos(prev => [...prev, medInput.trim()]); setMedInput(""); } } }}
+                    className="h-8 text-xs bg-background border-border flex-1" />
+                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { if (medInput.trim()) { setMedicamentos(prev => [...prev, medInput.trim()]); setMedInput(""); } }}>
+                    <Plus className="h-3 w-3 mr-1" /> {t("onboarding.clinical.addMed")}
+                  </Button>
+                </div>
+                {medicamentos.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {medicamentos.map((med, i) => (
+                      <span key={i} className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs text-primary font-medium flex items-center gap-1">
+                        {med}
+                        <button onClick={() => setMedicamentos(prev => prev.filter((_, j) => j !== i))} className="ml-1"><X className="h-3 w-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sleep & stress */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.sleepHours")}</label>
+                  <Input type="number" value={horasSueno} onChange={e => setHorasSueno(e.target.value)} placeholder="7" className="mt-1 h-9 text-xs bg-background border-border" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.stressLevel")}</label>
+                  <select value={nivelEstres} onChange={e => setNivelEstres(e.target.value)} className="w-full mt-1 h-9 rounded-lg border border-border bg-card px-3 text-xs text-foreground">
+                    <option value="bajo">{t("onboarding.clinical.stressLow")}</option>
+                    <option value="medio">{t("onboarding.clinical.stressMedium")}</option>
+                    <option value="alto">{t("onboarding.clinical.stressHigh")}</option>
+                    <option value="muy_alto">{t("onboarding.clinical.stressVeryHigh")}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Optional body measurements */}
+              <details className="rounded-xl border border-border p-3">
+                <summary className="text-xs font-semibold text-primary cursor-pointer">{t("onboarding.clinical.optional")}</summary>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.bodyFat")}</label>
+                    <Input type="number" step="0.1" value={grasaCorporal} onChange={e => setGrasaCorporal(e.target.value)} placeholder="25" className="mt-1 h-9 text-xs bg-background border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.waist")}</label>
+                    <Input type="number" value={cinturaCm} onChange={e => setCinturaCm(e.target.value)} placeholder="80" className="mt-1 h-9 text-xs bg-background border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.hip")}</label>
+                    <Input type="number" value={caderaCm} onChange={e => setCaderaCm(e.target.value)} placeholder="95" className="mt-1 h-9 text-xs bg-background border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">{t("onboarding.clinical.arm")}</label>
+                    <Input type="number" value={brazoCm} onChange={e => setBrazoCm(e.target.value)} placeholder="30" className="mt-1 h-9 text-xs bg-background border-border" />
+                  </div>
+                </div>
+              </details>
+
+              {/* Disclaimer */}
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">⚠️ {t("footer.disclaimer")}</p>
+              </div>
             </div>
           )}
 

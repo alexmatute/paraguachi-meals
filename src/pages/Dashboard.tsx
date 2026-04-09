@@ -202,7 +202,8 @@ const Dashboard = () => {
         )}
       </main>
 
-      <footer className="border-t border-border/50 py-6">
+      <footer className="border-t border-border/50 py-6 space-y-2">
+        <p className="text-center text-[10px] text-muted-foreground/70 max-w-2xl mx-auto leading-relaxed">{t("footer.disclaimer")}</p>
         <p className="text-center text-[11px] text-muted-foreground">{t("footer.credits")}</p>
       </footer>
     </div>
