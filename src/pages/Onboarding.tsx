@@ -91,14 +91,35 @@ const Onboarding = () => {
   const [goalWeight, setGoalWeight] = useState("");
   const [dietType, setDietType] = useState<"kcal" | "portion">("kcal");
 
-  // Dynamic steps: insert body step after goal if goal is body-related
+  // Clinical fields
+  const [tipoDiabetes, setTipoDiabetes] = useState("");
+  const [usaInsulina, setUsaInsulina] = useState(false);
+  const [hba1c, setHba1c] = useState("");
+  const [enfermedadRenal, setEnfermedadRenal] = useState(false);
+  const [presionSistolica, setPresionSistolica] = useState("");
+  const [presionDiastolica, setPresionDiastolica] = useState("");
+  const [metaSodio, setMetaSodio] = useState("estandar");
+  const [medicamentos, setMedicamentos] = useState<string[]>([]);
+  const [medInput, setMedInput] = useState("");
+  const [resistenciaInsulina, setResistenciaInsulina] = useState("");
+  const [horasSueno, setHorasSueno] = useState("7");
+  const [nivelEstres, setNivelEstres] = useState("medio");
+  const [grasaCorporal, setGrasaCorporal] = useState("");
+  const [cinturaCm, setCinturaCm] = useState("");
+  const [caderaCm, setCaderaCm] = useState("");
+  const [brazoCm, setBrazoCm] = useState("");
+
+  // Dynamic steps
   const needsBodyStep = BODY_GOALS.includes(selectedGoal);
+  const hasClinicalConditions = restrictions.some(r => r.includes("iabét") || r.includes("iabet") || r.includes("sodio") || r.includes("colesterol"));
   const steps = useMemo(() => {
     const base = ["input", "foods", "household", "goal"];
     if (needsBodyStep) base.push("body");
-    base.push("restrictions", "kitchen", "days", "summary");
+    base.push("restrictions");
+    if (hasClinicalConditions) base.push("clinical");
+    base.push("kitchen", "days", "summary");
     return base;
-  }, [needsBodyStep]);
+  }, [needsBodyStep, hasClinicalConditions]);
   const totalSteps = steps.length;
   const currentStepId = steps[step - 1];
 
