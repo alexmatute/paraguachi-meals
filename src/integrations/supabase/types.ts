@@ -63,39 +63,132 @@ export type Database = {
       }
       preferencias: {
         Row: {
+          altura_cm: number | null
+          brazo_cm: number | null
+          cadera_cm: number | null
+          calorias_objetivo: number | null
+          carbos_g: number | null
+          cintura_cm: number | null
           comidas: string[] | null
           creado_en: string | null
+          dias_ejercicio: number | null
+          duracion_ejercicio: string | null
+          edad: number | null
+          enfermedad_renal: boolean | null
           equipamiento: string[] | null
+          fase_entrenamiento: string | null
+          grasa_corporal: number | null
+          grasas_g: number | null
+          hba1c: number | null
+          horario_entreno: string | null
+          horas_sueno: number | null
           id: string
+          medicamentos: string[] | null
+          meta_sodio: string | null
           nivel_culinario: string | null
+          nivel_estres: string | null
+          nivel_experiencia: string | null
           objetivo: string | null
           personas: number | null
+          peso_kg: number | null
+          presion_diastolica: number | null
+          presion_sistolica: number | null
+          proteina_g: number | null
+          resistencia_insulina: string | null
           restricciones: string[] | null
+          sexo: string | null
+          tdee: number | null
           tiempo_cocina: string | null
+          tipo_diabetes: string | null
+          tipo_ejercicio: string | null
+          tmb: number | null
+          usa_insulina: boolean | null
           usuario_id: string
         }
         Insert: {
+          altura_cm?: number | null
+          brazo_cm?: number | null
+          cadera_cm?: number | null
+          calorias_objetivo?: number | null
+          carbos_g?: number | null
+          cintura_cm?: number | null
           comidas?: string[] | null
           creado_en?: string | null
+          dias_ejercicio?: number | null
+          duracion_ejercicio?: string | null
+          edad?: number | null
+          enfermedad_renal?: boolean | null
           equipamiento?: string[] | null
+          fase_entrenamiento?: string | null
+          grasa_corporal?: number | null
+          grasas_g?: number | null
+          hba1c?: number | null
+          horario_entreno?: string | null
+          horas_sueno?: number | null
           id?: string
+          medicamentos?: string[] | null
+          meta_sodio?: string | null
           nivel_culinario?: string | null
+          nivel_estres?: string | null
+          nivel_experiencia?: string | null
           objetivo?: string | null
           personas?: number | null
+          peso_kg?: number | null
+          presion_diastolica?: number | null
+          presion_sistolica?: number | null
+          proteina_g?: number | null
+          resistencia_insulina?: string | null
           restricciones?: string[] | null
+          sexo?: string | null
+          tdee?: number | null
           tiempo_cocina?: string | null
+          tipo_diabetes?: string | null
+          tipo_ejercicio?: string | null
+          tmb?: number | null
+          usa_insulina?: boolean | null
           usuario_id: string
         }
         Update: {
+          altura_cm?: number | null
+          brazo_cm?: number | null
+          cadera_cm?: number | null
+          calorias_objetivo?: number | null
+          carbos_g?: number | null
+          cintura_cm?: number | null
           comidas?: string[] | null
           creado_en?: string | null
+          dias_ejercicio?: number | null
+          duracion_ejercicio?: string | null
+          edad?: number | null
+          enfermedad_renal?: boolean | null
           equipamiento?: string[] | null
+          fase_entrenamiento?: string | null
+          grasa_corporal?: number | null
+          grasas_g?: number | null
+          hba1c?: number | null
+          horario_entreno?: string | null
+          horas_sueno?: number | null
           id?: string
+          medicamentos?: string[] | null
+          meta_sodio?: string | null
           nivel_culinario?: string | null
+          nivel_estres?: string | null
+          nivel_experiencia?: string | null
           objetivo?: string | null
           personas?: number | null
+          peso_kg?: number | null
+          presion_diastolica?: number | null
+          presion_sistolica?: number | null
+          proteina_g?: number | null
+          resistencia_insulina?: string | null
           restricciones?: string[] | null
+          sexo?: string | null
+          tdee?: number | null
           tiempo_cocina?: string | null
+          tipo_diabetes?: string | null
+          tipo_ejercicio?: string | null
+          tmb?: number | null
+          usa_insulina?: boolean | null
           usuario_id?: string
         }
         Relationships: [
