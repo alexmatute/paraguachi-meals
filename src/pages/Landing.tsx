@@ -191,10 +191,11 @@ const Landing = () => {
       </section>
 
       <footer className="border-t border-border/50 py-8">
-        <div className="container text-center">
+        <div className="container text-center space-y-3">
           <div className="flex justify-center mb-3">
             <Logo />
           </div>
+          <p className="text-[10px] text-muted-foreground/70 max-w-2xl mx-auto leading-relaxed">{t("footer.disclaimer")}</p>
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">{t("footer.credits")}</p>
         </div>
       </footer>
