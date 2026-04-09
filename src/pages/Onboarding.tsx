@@ -271,7 +271,7 @@ const Onboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error(t("onboarding.loginRequired")); setLoading(false); return; }
 
-      const prefs = {
+      const prefs: any = {
         usuario_id: user.id,
         personas,
         comidas: selectedMeals,
@@ -281,6 +281,29 @@ const Onboarding = () => {
         nivel_culinario: skillLevel,
         equipamiento: selectedEquipment,
       };
+
+      // Add clinical fields
+      if (needsBodyStep && bodyWeight) {
+        prefs.peso_kg = parseFloat(bodyWeight) || null;
+        prefs.altura_cm = parseFloat(bodyHeight) || null;
+        prefs.edad = parseInt(bodyAge) || null;
+        prefs.sexo = bodySex === "male" ? "M" : "F";
+      }
+      if (tipoDiabetes) prefs.tipo_diabetes = tipoDiabetes;
+      if (usaInsulina) prefs.usa_insulina = true;
+      if (hba1c) prefs.hba1c = parseFloat(hba1c);
+      if (enfermedadRenal) prefs.enfermedad_renal = true;
+      if (presionSistolica) prefs.presion_sistolica = parseInt(presionSistolica);
+      if (presionDiastolica) prefs.presion_diastolica = parseInt(presionDiastolica);
+      if (metaSodio !== "estandar") prefs.meta_sodio = metaSodio;
+      if (medicamentos.length > 0) prefs.medicamentos = medicamentos;
+      if (resistenciaInsulina) prefs.resistencia_insulina = resistenciaInsulina;
+      prefs.horas_sueno = parseInt(horasSueno) || 7;
+      prefs.nivel_estres = nivelEstres;
+      if (grasaCorporal) prefs.grasa_corporal = parseFloat(grasaCorporal);
+      if (cinturaCm) prefs.cintura_cm = parseFloat(cinturaCm);
+      if (caderaCm) prefs.cadera_cm = parseFloat(caderaCm);
+      if (brazoCm) prefs.brazo_cm = parseFloat(brazoCm);
 
       await supabase.from("preferencias").upsert(prefs, { onConflict: "usuario_id" });
 
