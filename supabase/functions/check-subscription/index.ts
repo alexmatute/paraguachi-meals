@@ -29,10 +29,37 @@ serve(async (req) => {
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
 
+    // 1) Check courtesy/gift subscription in profiles first
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("suscripcion_activa, suscripcion_hasta")
+      .eq("id", user.id)
+      .single();
+
+    const now = new Date();
+    const courtesyActive = profile?.suscripcion_activa === true
+      && profile?.suscripcion_hasta
+      && new Date(profile.suscripcion_hasta) > now;
+
+    if (courtesyActive) {
+      return new Response(JSON.stringify({
+        subscribed: true,
+        subscription_end: profile.suscripcion_hasta,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 2) Check Stripe subscription
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
+      // No Stripe customer and no courtesy → not subscribed
+      await supabaseClient.from("profiles").update({
+        suscripcion_activa: false,
+      }).eq("id", user.id);
+
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
