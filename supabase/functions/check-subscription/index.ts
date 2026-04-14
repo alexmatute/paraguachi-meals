@@ -55,11 +55,6 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
-      // No Stripe customer and no courtesy → not subscribed
-      await supabaseClient.from("profiles").update({
-        suscripcion_activa: false,
-      }).eq("id", user.id);
-
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
