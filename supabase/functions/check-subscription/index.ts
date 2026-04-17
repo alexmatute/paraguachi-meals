@@ -41,10 +41,17 @@ serve(async (req) => {
       && profile?.suscripcion_hasta
       && new Date(profile.suscripcion_hasta) > now;
 
+    const computeIsMonthly = (endIso: string | null) => {
+      if (!endIso) return false;
+      const days = (new Date(endIso).getTime() - now.getTime()) / 86400000;
+      return days >= 25 && days <= 35;
+    };
+
     if (courtesyActive) {
       return new Response(JSON.stringify({
         subscribed: true,
         subscription_end: profile.suscripcion_hasta,
+        is_monthly: computeIsMonthly(profile.suscripcion_hasta),
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -85,6 +92,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_end: subscriptionEnd,
+      is_monthly: computeIsMonthly(subscriptionEnd),
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
