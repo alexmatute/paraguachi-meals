@@ -128,6 +128,8 @@ const Fit = () => {
         const d = data.data;
         setSessionForm({
           tipo: d.tipo || "",
+          ubicacion: "",
+          intensidad: "",
           duracion_min: d.duracion_min ? String(d.duracion_min) : "",
           kcal: d.kcal ? String(d.kcal) : "",
           distancia_km: d.distancia_km ? String(d.distancia_km) : "",
