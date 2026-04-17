@@ -776,6 +776,9 @@ const translations: Record<Lang, Record<string, string>> = {
     "fit.deviceConnect": "Device integrations",
     "fit.deviceComingSoon": "Direct sync coming soon",
     "fit.uploadAnyDevice": "Upload screenshots from any device — AI extracts your data automatically",
+    "fit.dashboardCard": "Paraguachi Fit",
+    "fit.dashboardOpen": "Open training",
+    "fit.dashboardDesc": "Your monthly routine aligned with your meals",
   },
 };
 
