@@ -156,13 +156,20 @@ const Fit = () => {
   };
 
   const handleSaveSession = async () => {
+    if (!sessionForm.tipo) { toast.error(t("fit.selectType")); return; }
     setSavingSession(true);
     try {
       let foto_url: string | null = null;
       if (sessionFile) foto_url = await uploadFile(sessionFile, "sessions");
+      // Compose tipo with location + intensity for richer macro hints
+      const tipoCompuesto = [
+        sessionForm.tipo,
+        sessionForm.ubicacion ? `(${sessionForm.ubicacion})` : "",
+        sessionForm.intensidad ? `· ${sessionForm.intensidad}` : "",
+      ].filter(Boolean).join(" ");
       const { error } = await supabase.from("sesiones_entrenamiento").insert({
         usuario_id: user!.id,
-        tipo: sessionForm.tipo || null,
+        tipo: tipoCompuesto || null,
         duracion_min: sessionForm.duracion_min ? Number(sessionForm.duracion_min) : null,
         kcal: sessionForm.kcal ? Number(sessionForm.kcal) : null,
         distancia_km: sessionForm.distancia_km ? Number(sessionForm.distancia_km) : null,
@@ -172,7 +179,7 @@ const Fit = () => {
       });
       if (error) throw error;
       toast.success(t("fit.savedSession"));
-      setSessionForm({ tipo: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
+      setSessionForm({ tipo: "", ubicacion: "", intensidad: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
       setSessionFile(null);
       await loadAll();
     } catch (e: any) {
