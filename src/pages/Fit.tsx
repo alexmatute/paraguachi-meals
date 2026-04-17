@@ -380,12 +380,50 @@ const Fit = () => {
                 {analyzing && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />{t("fit.analyzing")}</p>}
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-                <div><Label className="text-xs">{t("fit.type")}</Label><Input value={sessionForm.tipo} onChange={e => setSessionForm(s => ({ ...s, tipo: e.target.value }))} placeholder="correr, fuerza..." /></div>
-                <div><Label className="text-xs">{t("fit.minutes")}</Label><Input type="number" value={sessionForm.duracion_min} onChange={e => setSessionForm(s => ({ ...s, duracion_min: e.target.value }))} /></div>
-                <div><Label className="text-xs">{t("fit.kcal")}</Label><Input type="number" value={sessionForm.kcal} onChange={e => setSessionForm(s => ({ ...s, kcal: e.target.value }))} /></div>
-                <div><Label className="text-xs">{t("fit.km")}</Label><Input type="number" step="0.01" value={sessionForm.distancia_km} onChange={e => setSessionForm(s => ({ ...s, distancia_km: e.target.value }))} /></div>
-                <div className="col-span-2"><Label className="text-xs">{t("fit.device")}</Label><Input value={sessionForm.dispositivo} onChange={e => setSessionForm(s => ({ ...s, dispositivo: e.target.value }))} placeholder="Apple Watch, Fitbit..." /></div>
+              <p className="text-[11px] text-muted-foreground mb-2">{t("fit.manualHint")}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <Label className="text-xs">{t("fit.type")} *</Label>
+                  <Select value={sessionForm.tipo} onValueChange={v => setSessionForm(s => ({ ...s, tipo: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder={t("fit.selectType")} /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {ACTIVITY_TYPES.map(k => (
+                        <SelectItem key={k} value={k}>{t(`type.${k}`)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("fit.location")}</Label>
+                  <Select value={sessionForm.ubicacion} onValueChange={v => setSessionForm(s => ({ ...s, ubicacion: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="indoor">{t("fit.indoor")}</SelectItem>
+                      <SelectItem value="outdoor">{t("fit.outdoor")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("fit.intensity")}</Label>
+                  <Select value={sessionForm.intensidad} onValueChange={v => setSessionForm(s => ({ ...s, intensidad: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baja">{t("fit.intLow")}</SelectItem>
+                      <SelectItem value="moderada">{t("fit.intModerate")}</SelectItem>
+                      <SelectItem value="alta">{t("fit.intHigh")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("fit.device")}</Label>
+                  <Input value={sessionForm.dispositivo} onChange={e => setSessionForm(s => ({ ...s, dispositivo: e.target.value }))} placeholder="Apple Watch, Fitbit..." className="mt-1" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div><Label className="text-xs">{t("fit.minutes")}</Label><Input type="number" value={sessionForm.duracion_min} onChange={e => setSessionForm(s => ({ ...s, duracion_min: e.target.value }))} className="mt-1" /></div>
+                <div><Label className="text-xs">{t("fit.kcal")}</Label><Input type="number" value={sessionForm.kcal} onChange={e => setSessionForm(s => ({ ...s, kcal: e.target.value }))} className="mt-1" /></div>
+                <div><Label className="text-xs">{t("fit.km")}</Label><Input type="number" step="0.01" value={sessionForm.distancia_km} onChange={e => setSessionForm(s => ({ ...s, distancia_km: e.target.value }))} className="mt-1" /></div>
               </div>
               <Textarea placeholder={t("fit.notes")} value={sessionForm.notas} onChange={e => setSessionForm(s => ({ ...s, notas: e.target.value }))} className="mb-3" />
               <Button onClick={handleSaveSession} disabled={savingSession} className="bg-primary text-primary-foreground">
