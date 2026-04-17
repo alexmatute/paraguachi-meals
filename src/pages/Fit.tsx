@@ -14,6 +14,13 @@ import Logo from "@/components/Logo";
 import LangSwitcher from "@/components/LangSwitcher";
 import { toast } from "sonner";
 
+const ACTIVITY_TYPES = [
+  "walking", "running", "cycling", "swimming", "weights", "calisthenics",
+  "hiit", "crossfit", "yoga", "pilates", "stretching", "dance", "boxing",
+  "rowing", "elliptical", "stairs", "hike", "football", "basketball",
+  "tennis", "functional", "other",
+];
+
 interface Routine {
   id: string;
   objetivo: string;
