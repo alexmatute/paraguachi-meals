@@ -14,6 +14,13 @@ import Logo from "@/components/Logo";
 import LangSwitcher from "@/components/LangSwitcher";
 import { toast } from "sonner";
 
+const ACTIVITY_TYPES = [
+  "walking", "running", "cycling", "swimming", "weights", "calisthenics",
+  "hiit", "crossfit", "yoga", "pilates", "stretching", "dance", "boxing",
+  "rowing", "elliptical", "stairs", "hike", "football", "basketball",
+  "tennis", "functional", "other",
+];
+
 interface Routine {
   id: string;
   objetivo: string;
@@ -58,7 +65,7 @@ const Fit = () => {
   const [diasSemana, setDiasSemana] = useState(3);
 
   // Session form
-  const [sessionForm, setSessionForm] = useState({ tipo: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
+  const [sessionForm, setSessionForm] = useState({ tipo: "", ubicacion: "", intensidad: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
   const [sessionFile, setSessionFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [savingSession, setSavingSession] = useState(false);
@@ -128,6 +135,8 @@ const Fit = () => {
         const d = data.data;
         setSessionForm({
           tipo: d.tipo || "",
+          ubicacion: "",
+          intensidad: "",
           duracion_min: d.duracion_min ? String(d.duracion_min) : "",
           kcal: d.kcal ? String(d.kcal) : "",
           distancia_km: d.distancia_km ? String(d.distancia_km) : "",
@@ -154,13 +163,20 @@ const Fit = () => {
   };
 
   const handleSaveSession = async () => {
+    if (!sessionForm.tipo) { toast.error(t("fit.selectType")); return; }
     setSavingSession(true);
     try {
       let foto_url: string | null = null;
       if (sessionFile) foto_url = await uploadFile(sessionFile, "sessions");
+      // Compose tipo with location + intensity for richer macro hints
+      const tipoCompuesto = [
+        sessionForm.tipo,
+        sessionForm.ubicacion ? `(${sessionForm.ubicacion})` : "",
+        sessionForm.intensidad ? `· ${sessionForm.intensidad}` : "",
+      ].filter(Boolean).join(" ");
       const { error } = await supabase.from("sesiones_entrenamiento").insert({
         usuario_id: user!.id,
-        tipo: sessionForm.tipo || null,
+        tipo: tipoCompuesto || null,
         duracion_min: sessionForm.duracion_min ? Number(sessionForm.duracion_min) : null,
         kcal: sessionForm.kcal ? Number(sessionForm.kcal) : null,
         distancia_km: sessionForm.distancia_km ? Number(sessionForm.distancia_km) : null,
@@ -170,7 +186,7 @@ const Fit = () => {
       });
       if (error) throw error;
       toast.success(t("fit.savedSession"));
-      setSessionForm({ tipo: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
+      setSessionForm({ tipo: "", ubicacion: "", intensidad: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
       setSessionFile(null);
       await loadAll();
     } catch (e: any) {
@@ -364,12 +380,50 @@ const Fit = () => {
                 {analyzing && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />{t("fit.analyzing")}</p>}
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-                <div><Label className="text-xs">{t("fit.type")}</Label><Input value={sessionForm.tipo} onChange={e => setSessionForm(s => ({ ...s, tipo: e.target.value }))} placeholder="correr, fuerza..." /></div>
-                <div><Label className="text-xs">{t("fit.minutes")}</Label><Input type="number" value={sessionForm.duracion_min} onChange={e => setSessionForm(s => ({ ...s, duracion_min: e.target.value }))} /></div>
-                <div><Label className="text-xs">{t("fit.kcal")}</Label><Input type="number" value={sessionForm.kcal} onChange={e => setSessionForm(s => ({ ...s, kcal: e.target.value }))} /></div>
-                <div><Label className="text-xs">{t("fit.km")}</Label><Input type="number" step="0.01" value={sessionForm.distancia_km} onChange={e => setSessionForm(s => ({ ...s, distancia_km: e.target.value }))} /></div>
-                <div className="col-span-2"><Label className="text-xs">{t("fit.device")}</Label><Input value={sessionForm.dispositivo} onChange={e => setSessionForm(s => ({ ...s, dispositivo: e.target.value }))} placeholder="Apple Watch, Fitbit..." /></div>
+              <p className="text-[11px] text-muted-foreground mb-2">{t("fit.manualHint")}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <Label className="text-xs">{t("fit.type")} *</Label>
+                  <Select value={sessionForm.tipo} onValueChange={v => setSessionForm(s => ({ ...s, tipo: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder={t("fit.selectType")} /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {ACTIVITY_TYPES.map(k => (
+                        <SelectItem key={k} value={k}>{t(`type.${k}`)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("fit.location")}</Label>
+                  <Select value={sessionForm.ubicacion} onValueChange={v => setSessionForm(s => ({ ...s, ubicacion: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="indoor">{t("fit.indoor")}</SelectItem>
+                      <SelectItem value="outdoor">{t("fit.outdoor")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("fit.intensity")}</Label>
+                  <Select value={sessionForm.intensidad} onValueChange={v => setSessionForm(s => ({ ...s, intensidad: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baja">{t("fit.intLow")}</SelectItem>
+                      <SelectItem value="moderada">{t("fit.intModerate")}</SelectItem>
+                      <SelectItem value="alta">{t("fit.intHigh")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("fit.device")}</Label>
+                  <Input value={sessionForm.dispositivo} onChange={e => setSessionForm(s => ({ ...s, dispositivo: e.target.value }))} placeholder="Apple Watch, Fitbit..." className="mt-1" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div><Label className="text-xs">{t("fit.minutes")}</Label><Input type="number" value={sessionForm.duracion_min} onChange={e => setSessionForm(s => ({ ...s, duracion_min: e.target.value }))} className="mt-1" /></div>
+                <div><Label className="text-xs">{t("fit.kcal")}</Label><Input type="number" value={sessionForm.kcal} onChange={e => setSessionForm(s => ({ ...s, kcal: e.target.value }))} className="mt-1" /></div>
+                <div><Label className="text-xs">{t("fit.km")}</Label><Input type="number" step="0.01" value={sessionForm.distancia_km} onChange={e => setSessionForm(s => ({ ...s, distancia_km: e.target.value }))} className="mt-1" /></div>
               </div>
               <Textarea placeholder={t("fit.notes")} value={sessionForm.notas} onChange={e => setSessionForm(s => ({ ...s, notas: e.target.value }))} className="mb-3" />
               <Button onClick={handleSaveSession} disabled={savingSession} className="bg-primary text-primary-foreground">
