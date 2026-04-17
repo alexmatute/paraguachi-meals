@@ -58,7 +58,7 @@ const Fit = () => {
   const [diasSemana, setDiasSemana] = useState(3);
 
   // Session form
-  const [sessionForm, setSessionForm] = useState({ tipo: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
+  const [sessionForm, setSessionForm] = useState({ tipo: "", ubicacion: "", intensidad: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
   const [sessionFile, setSessionFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [savingSession, setSavingSession] = useState(false);
