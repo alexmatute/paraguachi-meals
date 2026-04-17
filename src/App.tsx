@@ -14,6 +14,7 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import PlanViewer from "./pages/PlanViewer";
 import Profile from "./pages/Profile";
+import Fit from "./pages/Fit";
 import PublicPlanViewer from "./pages/PublicPlanViewer";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/onboarding" element={<RequireSubscription><Onboarding /></RequireSubscription>} />
             <Route path="/dashboard" element={<RequireSubscription><Dashboard /></RequireSubscription>} />
             <Route path="/plan/:id" element={<RequireSubscription><PlanViewer /></RequireSubscription>} />
+            <Route path="/fit" element={<RequireSubscription><Fit /></RequireSubscription>} />
 
             {/* Admin */}
             <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>

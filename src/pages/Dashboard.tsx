@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Plus, Calendar, Loader2, User, Download, Share2, FileText, Lightbulb, MessageCircle, Shield } from "lucide-react";
+import { LogOut, Plus, Calendar, Loader2, User, Download, Share2, FileText, Lightbulb, MessageCircle, Shield, Dumbbell } from "lucide-react";
 import Logo from "@/components/Logo";
 import MobileMenu from "@/components/MobileMenu";
 import { useAuth } from "@/hooks/use-auth";
@@ -31,7 +31,7 @@ interface Profile {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasFitAccess } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -128,7 +128,19 @@ const Dashboard = () => {
         <div className="mb-8 flex flex-wrap gap-3">
           <Link to="/onboarding"><Button className="bg-primary text-primary-foreground font-semibold gap-2"><Plus className="h-4 w-4" /> {t("dashboard.newPlan")}</Button></Link>
           {plans.length > 0 && <Link to={`/plan/${plans[0].id}`}><Button variant="outline" className="gap-2 border-border"><FileText className="h-4 w-4" /> {t("dashboard.lastPlan")}</Button></Link>}
+          {hasFitAccess && <Link to="/fit"><Button variant="outline" className="gap-2 border-primary/40 text-primary hover:bg-primary/10"><Dumbbell className="h-4 w-4" /> {t("fit.title")}</Button></Link>}
         </div>
+
+        {hasFitAccess && (
+          <div className="mb-6 card-surface p-4 flex items-center gap-4 border-primary/30">
+            <Dumbbell className="h-8 w-8 text-primary shrink-0" />
+            <div className="flex-1">
+              <h3 className="font-heading text-sm font-semibold">{t("fit.dashboardCard")}</h3>
+              <p className="text-xs text-muted-foreground">{t("fit.dashboardDesc")}</p>
+            </div>
+            <Link to="/fit"><Button size="sm" className="bg-primary text-primary-foreground text-xs">{t("fit.dashboardOpen")}</Button></Link>
+          </div>
+        )}
 
         {!profile?.telegram_id && (
           <div className="mb-6 card-surface p-4 flex items-center gap-4">
