@@ -9,6 +9,7 @@ export function useAuth() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+  const [isMonthly, setIsMonthly] = useState(false);
   const [checkingSub, setCheckingSub] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
@@ -26,10 +27,12 @@ export function useAuth() {
       if (!error && data) {
         setSubscribed(!!data.subscribed);
         setSubscriptionEnd(data.subscription_end || null);
+        setIsMonthly(!!data.is_monthly);
       }
     } catch {
       setSubscribed(false);
       setSubscriptionEnd(null);
+      setIsMonthly(false);
     } finally {
       if (!isBackground) setCheckingSub(false);
     }
@@ -65,14 +68,17 @@ export function useAuth() {
       if (!subscriptionError && subscriptionData) {
         setSubscribed(!!subscriptionData.subscribed);
         setSubscriptionEnd(subscriptionData.subscription_end || null);
+        setIsMonthly(!!subscriptionData.is_monthly);
       } else {
         setSubscribed(false);
         setSubscriptionEnd(null);
+        setIsMonthly(false);
       }
     } catch {
       setIsAdmin(false);
       setSubscribed(false);
       setSubscriptionEnd(null);
+      setIsMonthly(false);
     } finally {
       setLoading(false);
       setCheckingSub(false);
@@ -102,5 +108,7 @@ export function useAuth() {
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
 
-  return { user, loading, isAdmin, subscribed, subscriptionEnd, checkingSub, checkSubscription, initialCheckDone };
+  // Admins always have monthly-tier features
+  const hasFitAccess = isAdmin || isMonthly;
+  return { user, loading, isAdmin, subscribed, subscriptionEnd, isMonthly, hasFitAccess, checkingSub, checkSubscription, initialCheckDone };
 }
