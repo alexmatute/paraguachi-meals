@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      fotos_progreso: {
+        Row: {
+          cintura_cm: number | null
+          creado_en: string | null
+          fecha: string
+          foto_url: string
+          id: string
+          notas: string | null
+          peso_kg: number | null
+          tipo: string
+          usuario_id: string
+        }
+        Insert: {
+          cintura_cm?: number | null
+          creado_en?: string | null
+          fecha?: string
+          foto_url: string
+          id?: string
+          notas?: string | null
+          peso_kg?: number | null
+          tipo?: string
+          usuario_id: string
+        }
+        Update: {
+          cintura_cm?: number | null
+          creado_en?: string | null
+          fecha?: string
+          foto_url?: string
+          id?: string
+          notas?: string | null
+          peso_kg?: number | null
+          tipo?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fotos_progreso_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planes: {
         Row: {
           creado_en: string | null
@@ -320,6 +364,56 @@ export type Database = {
           },
         ]
       }
+      rutinas_fit: {
+        Row: {
+          activa: boolean | null
+          creado_en: string | null
+          dias_semana: number | null
+          duracion_dias: number | null
+          equipamiento: string[] | null
+          id: string
+          nivel: string | null
+          notas: string | null
+          objetivo: string | null
+          plan_json: Json | null
+          usuario_id: string
+        }
+        Insert: {
+          activa?: boolean | null
+          creado_en?: string | null
+          dias_semana?: number | null
+          duracion_dias?: number | null
+          equipamiento?: string[] | null
+          id?: string
+          nivel?: string | null
+          notas?: string | null
+          objetivo?: string | null
+          plan_json?: Json | null
+          usuario_id: string
+        }
+        Update: {
+          activa?: boolean | null
+          creado_en?: string | null
+          dias_semana?: number | null
+          duracion_dias?: number | null
+          equipamiento?: string[] | null
+          id?: string
+          nivel?: string | null
+          notas?: string | null
+          objetivo?: string | null
+          plan_json?: Json | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rutinas_fit_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sesiones: {
         Row: {
           ciudad: string | null
@@ -357,6 +451,69 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sesiones_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sesiones_entrenamiento: {
+        Row: {
+          creado_en: string | null
+          datos_ia: Json | null
+          dispositivo: string | null
+          distancia_km: number | null
+          duracion_min: number | null
+          fecha: string
+          foto_url: string | null
+          id: string
+          kcal: number | null
+          notas: string | null
+          rutina_id: string | null
+          tipo: string | null
+          usuario_id: string
+        }
+        Insert: {
+          creado_en?: string | null
+          datos_ia?: Json | null
+          dispositivo?: string | null
+          distancia_km?: number | null
+          duracion_min?: number | null
+          fecha?: string
+          foto_url?: string | null
+          id?: string
+          kcal?: number | null
+          notas?: string | null
+          rutina_id?: string | null
+          tipo?: string | null
+          usuario_id: string
+        }
+        Update: {
+          creado_en?: string | null
+          datos_ia?: Json | null
+          dispositivo?: string | null
+          distancia_km?: number | null
+          duracion_min?: number | null
+          fecha?: string
+          foto_url?: string | null
+          id?: string
+          kcal?: number | null
+          notas?: string | null
+          rutina_id?: string | null
+          tipo?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sesiones_entrenamiento_rutina_id_fkey"
+            columns: ["rutina_id"]
+            isOneToOne: false
+            referencedRelation: "rutinas_fit"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sesiones_entrenamiento_usuario_id_fkey"
             columns: ["usuario_id"]
             isOneToOne: false
             referencedRelation: "profiles"
