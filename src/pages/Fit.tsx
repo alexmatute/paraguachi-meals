@@ -304,14 +304,25 @@ const Fit = () => {
                 <Sparkles className="h-10 w-10 mx-auto text-primary mb-4" />
                 <h3 className="font-heading text-lg font-semibold">{t("fit.activate")}</h3>
                 <p className="text-sm text-muted-foreground mt-2 mb-6">{t("fit.subtitle")}</p>
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <Label className="text-xs">{t("fit.daysWeek")}:</Label>
-                  <Select value={String(diasSemana)} onValueChange={v => setDiasSemana(Number(v))}>
-                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {[2, 3, 4, 5, 6].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto mb-6">
+                  <div>
+                    <Label className="text-xs">{t("fit.daysWeek")}</Label>
+                    <Select value={String(diasSemana)} onValueChange={v => setDiasSemana(Number(v))}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[2, 3, 4, 5, 6].map(n => <SelectItem key={n} value={String(n)}>{n} {t("fit.daysWeek")}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t("fit.sessionDuration")}</Label>
+                    <Select value={String(duracionMin)} onValueChange={v => setDuracionMin(Number(v))}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[15, 20, 30, 45, 60, 90].map(n => <SelectItem key={n} value={String(n)}>{n} {t("fit.minutes")}{n <= 20 ? ` · ${t("fit.express")}` : ""}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <Button onClick={handleGenerate} disabled={generating} className="bg-primary text-primary-foreground">
                   {generating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t("fit.generating")}</> : <><Sparkles className="h-4 w-4 mr-2" />{t("fit.activate")}</>}
@@ -319,46 +330,165 @@ const Fit = () => {
               </div>
             ) : (
               <>
-                <div className="card-surface p-5 flex items-center justify-between flex-wrap gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">{t("fit.duration")}: {routine.duracion_dias} días • {routine.dias_semana} {t("fit.daysWeek")}</p>
-                    {plan?.resumen && <p className="text-sm mt-1">{plan.resumen}</p>}
-                  </div>
-                  <Button variant="outline" size="sm" onClick={handleGenerate} disabled={generating}>
-                    {generating ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
-                    {t("fit.regenerate")}
-                  </Button>
-                </div>
-
-                {plan?.semanas?.map((semana: any) => (
-                  <div key={semana.numero} className="card-surface p-5">
-                    <h3 className="font-heading font-semibold mb-3">{t("fit.week")} {semana.numero} {semana.enfoque && <span className="text-xs text-muted-foreground font-normal">— {semana.enfoque}</span>}</h3>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {semana.sesiones?.map((ses: any, i: number) => (
-                        <div key={i} className="rounded-lg border border-border/50 p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium text-primary">Día {ses.dia} • {ses.tipo}</span>
-                            <span className="text-xs text-muted-foreground">{ses.duracion_min} {t("fit.minutes")} · {ses.kcal_objetivo} {t("fit.kcal")}</span>
-                          </div>
-                          <p className="font-medium text-sm">{ses.nombre}</p>
-                          {ses.calentamiento?.length > 0 && (
-                            <p className="text-[11px] text-muted-foreground mt-1"><strong>{t("fit.warmup")}:</strong> {ses.calentamiento.join(", ")}</p>
-                          )}
-                          {ses.ejercicios?.length > 0 && (
-                            <ul className="mt-2 space-y-0.5 text-[11px]">
-                              {ses.ejercicios.map((ej: any, j: number) => (
-                                <li key={j}>• {ej.nombre} — {ej.series}×{ej.reps} {ej.descanso_seg && `(${ej.descanso_seg}s)`}</li>
-                              ))}
-                            </ul>
-                          )}
-                          {ses.ajuste_macros && (
-                            <p className="text-[11px] mt-2 p-2 rounded bg-secondary/10 text-secondary"><strong>{t("fit.macroAdjust")}:</strong> {ses.ajuste_macros}</p>
-                          )}
-                        </div>
-                      ))}
+                {/* Header rutina */}
+                <div className="card-surface p-5">
+                  <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <Badge variant="secondary" className="capitalize"><Target className="h-3 w-3 mr-1" />{routine.objetivo}</Badge>
+                        <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />{plan?.duracion_min_sesion || duracionMin} {t("fit.minutes")}</Badge>
+                        <Badge variant="outline">{routine.dias_semana} {t("fit.daysWeek")}</Badge>
+                        <Badge variant="outline">{routine.duracion_dias} {t("fit.days")}</Badge>
+                      </div>
+                      {plan?.resumen && <p className="text-sm text-muted-foreground">{plan.resumen}</p>}
                     </div>
                   </div>
-                ))}
+                  {/* Regenerar con nuevos parámetros */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-border/50">
+                    <div>
+                      <Label className="text-xs">{t("fit.daysWeek")}</Label>
+                      <Select value={String(diasSemana)} onValueChange={v => setDiasSemana(Number(v))}>
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {[2, 3, 4, 5, 6].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">{t("fit.sessionDuration")}</Label>
+                      <Select value={String(duracionMin)} onValueChange={v => setDuracionMin(Number(v))}>
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {[15, 20, 30, 45, 60, 90].map(n => <SelectItem key={n} value={String(n)}>{n} min{n <= 20 ? ` · ${t("fit.express")}` : ""}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      <Button variant="outline" size="sm" onClick={handleGenerate} disabled={generating} className="w-full h-9">
+                        {generating ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
+                        {t("fit.regenerate")}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabs por semana */}
+                {plan?.semanas?.length > 0 && (
+                  <Tabs value={activeWeek} onValueChange={setActiveWeek}>
+                    <TabsList className="w-full grid" style={{ gridTemplateColumns: `repeat(${plan.semanas.length}, 1fr)` }}>
+                      {plan.semanas.map((s: any) => (
+                        <TabsTrigger key={s.numero} value={String(s.numero)} className="text-xs sm:text-sm">
+                          {t("fit.week")} {s.numero}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    {plan.semanas.map((semana: any) => (
+                      <TabsContent key={semana.numero} value={String(semana.numero)} className="space-y-3 mt-4">
+                        {semana.enfoque && (
+                          <p className="text-xs text-muted-foreground italic px-1">→ {semana.enfoque}</p>
+                        )}
+                        <Accordion type="single" collapsible className="space-y-3">
+                          {semana.sesiones?.map((ses: any, i: number) => (
+                            <AccordionItem
+                              key={i}
+                              value={`s-${semana.numero}-${i}`}
+                              className="card-surface border border-border/50 rounded-lg px-4 data-[state=open]:border-primary/40"
+                            >
+                              <AccordionTrigger className="hover:no-underline py-4">
+                                <div className="flex flex-1 items-center justify-between gap-3 pr-2">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
+                                      D{ses.dia}
+                                    </div>
+                                    <div className="text-left min-w-0">
+                                      <p className="font-medium text-sm truncate">{ses.nombre}</p>
+                                      <p className="text-[11px] text-muted-foreground capitalize">{ses.tipo}</p>
+                                    </div>
+                                  </div>
+                                  <div className="hidden sm:flex items-center gap-2 shrink-0">
+                                    <Badge variant="outline" className="text-[10px]"><Clock className="h-2.5 w-2.5 mr-1" />{ses.duracion_min}min</Badge>
+                                    <Badge variant="outline" className="text-[10px]"><Flame className="h-2.5 w-2.5 mr-1" />{ses.kcal_objetivo}kcal</Badge>
+                                  </div>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="pb-4 space-y-4">
+                                <div className="flex sm:hidden items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" className="text-[10px]"><Clock className="h-2.5 w-2.5 mr-1" />{ses.duracion_min}min</Badge>
+                                  <Badge variant="outline" className="text-[10px]"><Flame className="h-2.5 w-2.5 mr-1" />{ses.kcal_objetivo}kcal</Badge>
+                                </div>
+
+                                {ses.calentamiento?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-1">🔥 {t("fit.warmup")}</p>
+                                    <ul className="text-sm text-muted-foreground space-y-0.5 pl-4">
+                                      {ses.calentamiento.map((c: string, k: number) => <li key={k} className="list-disc">{c}</li>)}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {ses.ejercicios?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-2">💪 {t("fit.exercises")}</p>
+                                    <div className="space-y-2">
+                                      {ses.ejercicios.map((ej: any, j: number) => {
+                                        const muscle = ej.musculo_principal || "full_body";
+                                        const wikiUrl = `https://musclewiki.com/Search?q=${encodeURIComponent(ej.nombre)}`;
+                                        const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`how to ${ej.nombre} proper form`)}`;
+                                        return (
+                                          <div key={j} className="rounded-md border border-border/40 bg-muted/20 p-3">
+                                            <div className="flex items-start justify-between gap-3 mb-1.5">
+                                              <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm">{ej.nombre}</p>
+                                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary capitalize">{muscle.replace("_", " ")}</span>
+                                                  {ej.equipo && <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary/20 text-secondary-foreground capitalize">{ej.equipo.replace("_", " ")}</span>}
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground shrink-0">
+                                                <span className="text-foreground font-bold">{ej.series}×{ej.reps}</span>
+                                                {ej.descanso_seg && <span className="text-[10px]">⏱{ej.descanso_seg}s</span>}
+                                              </div>
+                                            </div>
+                                            {ej.descripcion && (
+                                              <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{ej.descripcion}</p>
+                                            )}
+                                            <div className="flex gap-2">
+                                              <a href={wikiUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-border hover:border-primary hover:text-primary transition">
+                                                <Play className="h-2.5 w-2.5" /> MuscleWiki
+                                              </a>
+                                              <a href={ytUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-border hover:border-primary hover:text-primary transition">
+                                                <Play className="h-2.5 w-2.5" /> YouTube
+                                              </a>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {ses.enfriamiento?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-1">🧘 {t("fit.cooldown")}</p>
+                                    <ul className="text-sm text-muted-foreground space-y-0.5 pl-4">
+                                      {ses.enfriamiento.map((c: string, k: number) => <li key={k} className="list-disc">{c}</li>)}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {ses.ajuste_macros && (
+                                  <div className="rounded-md p-3 bg-secondary/10 border border-secondary/30">
+                                    <p className="text-xs"><strong className="text-secondary-foreground">🥗 {t("fit.macroAdjust")}:</strong> <span className="text-muted-foreground">{ses.ajuste_macros}</span></p>
+                                  </div>
+                                )}
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </TabsContent>
+                    ))}
+                  </Tabs>
+                )}
 
                 {plan?.consejos_generales?.length > 0 && (
                   <div className="card-surface p-5">
@@ -371,6 +501,7 @@ const Fit = () => {
               </>
             )}
           </TabsContent>
+
 
           {/* SESSIONS TAB */}
           <TabsContent value="sessions" className="space-y-6">
