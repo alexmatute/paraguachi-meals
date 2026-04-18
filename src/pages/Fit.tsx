@@ -5,11 +5,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Dumbbell, Plus, Sparkles, Image as ImageIcon, Watch, Camera, Trash2, ArrowLeft, Lock } from "lucide-react";
+import { Loader2, Dumbbell, Plus, Sparkles, Image as ImageIcon, Watch, Camera, Trash2, ArrowLeft, Lock, Play, Flame, Clock, Target } from "lucide-react";
 import Logo from "@/components/Logo";
 import LangSwitcher from "@/components/LangSwitcher";
 import { toast } from "sonner";
@@ -63,6 +65,8 @@ const Fit = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [diasSemana, setDiasSemana] = useState(3);
+  const [duracionMin, setDuracionMin] = useState(45);
+  const [activeWeek, setActiveWeek] = useState("1");
 
   // Session form
   const [sessionForm, setSessionForm] = useState({ tipo: "", ubicacion: "", intensidad: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
@@ -101,7 +105,7 @@ const Fit = () => {
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-routine", {
-        body: { dias_semana: diasSemana, duracion_dias: 28, lang },
+        body: { dias_semana: diasSemana, duracion_dias: 28, duracion_min_sesion: duracionMin, lang },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
