@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { dias_semana = 3, duracion_dias = 28, lang = "es" } = body;
+    const { dias_semana = 3, duracion_dias = 28, duracion_min_sesion = 45, lang = "es" } = body;
 
     // Cargar preferencias y perfil
     const { data: prefs } = await supabase
@@ -35,8 +35,17 @@ Deno.serve(async (req) => {
     const equipamiento = prefs?.equipamiento?.length ? prefs.equipamiento : ["peso_corporal"];
     const nivel = prefs?.nivel_experiencia || "principiante";
 
+    // Bloques de tiempo según duración total
+    const warmupMin = duracion_min_sesion <= 20 ? 3 : 5;
+    const cooldownMin = duracion_min_sesion <= 20 ? 2 : 5;
+    const mainMin = duracion_min_sesion - warmupMin - cooldownMin;
+    const numEjercicios = duracion_min_sesion <= 20 ? "4-5" : duracion_min_sesion <= 30 ? "5-6" : duracion_min_sesion <= 45 ? "6-8" : "8-10";
+
     const prompt = lang === "es"
       ? `Eres un entrenador personal certificado. Genera una rutina de entrenamiento de ${duracion_dias} días con ${dias_semana} sesiones por semana.
+DURACIÓN OBLIGATORIA POR SESIÓN: ${duracion_min_sesion} minutos exactos (calentamiento ${warmupMin}min + principal ${mainMin}min + enfriamiento ${cooldownMin}min).
+Si la duración es ≤20 min, prioriza circuitos HIIT/EMOM/Tabata para máxima eficiencia.
+Cantidad de ejercicios por sesión: ${numEjercicios}.
 
 Datos del cliente:
 - Objetivo: ${objetivo}
@@ -50,13 +59,14 @@ REGLAS:
 1. Adapta la intensidad al nivel del usuario (progresión semanal).
 2. Respeta el equipamiento (no inventes máquinas).
 3. Para "perder" prioriza HIIT + fuerza compuesta. Para "ganar" prioriza hipertrofia (8-12 reps). Para "mantener" mezcla cardio+fuerza.
-4. Cada sesión debe incluir: calentamiento (5min), bloque principal (ejercicios con series/reps/descanso), enfriamiento (5min).
-5. Estima kcal_objetivo por sesión.
+4. Para cada ejercicio incluye: nombre claro, series, reps, descanso_seg, musculo_principal (uno de: pecho, espalda, hombros, biceps, triceps, abdominales, gluteos, cuadriceps, isquiotibiales, gemelos, cardio, full_body), equipo (ej: peso_corporal, mancuernas, barra, kettlebell, banda, maquina), y descripcion (1 frase de cómo ejecutarlo correctamente).
+5. Estima kcal_objetivo por sesión basado en duración e intensidad.
 
-Devuelve SOLO JSON válido con esta estructura:
+Devuelve SOLO JSON válido:
 {
   "resumen": "descripción breve",
   "frecuencia_semanal": ${dias_semana},
+  "duracion_min_sesion": ${duracion_min_sesion},
   "semanas": [
     {
       "numero": 1,
@@ -66,14 +76,14 @@ Devuelve SOLO JSON válido con esta estructura:
           "dia": 1,
           "nombre": "Full body básico",
           "tipo": "fuerza|cardio|hiit|movilidad|mixto",
-          "duracion_min": 45,
-          "kcal_objetivo": 350,
-          "calentamiento": ["5min trote suave"],
+          "duracion_min": ${duracion_min_sesion},
+          "kcal_objetivo": 200,
+          "calentamiento": ["${warmupMin}min movilidad articular"],
           "ejercicios": [
-            {"nombre":"Sentadilla","series":3,"reps":"12","descanso_seg":60,"notas":"opcional"}
+            {"nombre":"Sentadilla","series":3,"reps":"12","descanso_seg":60,"musculo_principal":"cuadriceps","equipo":"peso_corporal","descripcion":"Pies al ancho de hombros, baja caderas atrás manteniendo espalda recta."}
           ],
-          "enfriamiento": ["estiramiento 5min"],
-          "ajuste_macros": "Día de fuerza: come +20g proteína post-entreno"
+          "enfriamiento": ["${cooldownMin}min estiramiento"],
+          "ajuste_macros": "Día de fuerza: +20g proteína post-entreno"
         }
       ]
     }
@@ -81,6 +91,9 @@ Devuelve SOLO JSON válido con esta estructura:
   "consejos_generales": ["consejo 1","consejo 2"]
 }`
       : `You are a certified personal trainer. Generate a ${duracion_dias}-day training routine with ${dias_semana} sessions per week.
+MANDATORY SESSION DURATION: exactly ${duracion_min_sesion} minutes (warmup ${warmupMin}min + main ${mainMin}min + cooldown ${cooldownMin}min).
+If duration ≤20 min, prioritize HIIT/EMOM/Tabata circuits.
+Exercises per session: ${numEjercicios}.
 
 Client data:
 - Goal: ${objetivo}
@@ -89,7 +102,9 @@ Client data:
 - Age: ${prefs?.edad || "n/a"}, ${prefs?.sexo || "n/a"}, ${prefs?.peso_kg || "n/a"}kg
 - Meal plan kcal: ${prefs?.calorias_objetivo || "n/a"}, protein: ${prefs?.proteina_g || "n/a"}g
 
-Return ONLY valid JSON with the structure (in English): resumen, frecuencia_semanal, semanas[{numero,enfoque,sesiones[{dia,nombre,tipo,duracion_min,kcal_objetivo,calentamiento,ejercicios[{nombre,series,reps,descanso_seg,notas}],enfriamiento,ajuste_macros}]}], consejos_generales[].`;
+For each exercise include: nombre, series, reps, descanso_seg, musculo_principal (chest/back/shoulders/biceps/triceps/abs/glutes/quads/hamstrings/calves/cardio/full_body), equipo, descripcion (1 sentence on form).
+
+Return ONLY valid JSON with the same structure shown above (in English).`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
