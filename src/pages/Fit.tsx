@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Dumbbell, Plus, Sparkles, Image as ImageIcon, Watch, Camera, Trash2, ArrowLeft, Lock, Play, Flame, Clock, Target, ExternalLink, Repeat, Timer, Zap } from "lucide-react";
+import { Loader2, Dumbbell, Plus, Sparkles, Image as ImageIcon, Watch, Camera, Trash2, ArrowLeft, Lock, Play, Flame, Clock, Target, ExternalLink, Repeat, Timer, Zap, TrendingDown, TrendingUp, Activity, Award, Brain, Scale } from "lucide-react";
 import Logo from "@/components/Logo";
 import LangSwitcher from "@/components/LangSwitcher";
 import { toast } from "sonner";
