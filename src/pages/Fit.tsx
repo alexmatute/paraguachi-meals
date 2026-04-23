@@ -94,6 +94,36 @@ const normalizeRoutinePlan = (rawPlan: unknown) => {
   return parsed && typeof parsed === "object" ? parsed : null;
 };
 
+// Map muscle group → MuscleWiki body-part slug (browse pages exist & don't 404)
+const MUSCLEWIKI_MUSCLE_MAP: Record<string, string> = {
+  pecho: "chest", chest: "chest",
+  espalda: "back", back: "back", lats: "back", dorsal: "back",
+  hombros: "shoulders", shoulders: "shoulders", deltoides: "shoulders",
+  biceps: "biceps", bíceps: "biceps",
+  triceps: "triceps", tríceps: "triceps",
+  antebrazo: "forearms", forearms: "forearms",
+  abdomen: "abdominals", abs: "abdominals", core: "abdominals", abdominales: "abdominals",
+  cuadriceps: "quadriceps", cuádriceps: "quadriceps", quads: "quadriceps", piernas: "quadriceps",
+  isquios: "hamstrings", hamstrings: "hamstrings", femoral: "hamstrings",
+  gluteos: "glutes", glúteos: "glutes", glutes: "glutes",
+  pantorrillas: "calves", calves: "calves", gemelos: "calves",
+  trapecio: "traps", traps: "traps",
+};
+
+const buildMuscleWikiUrl = (muscle: string | undefined, lang: string) => {
+  const key = (muscle || "").toLowerCase().replace(/\s+/g, "_");
+  const slug = MUSCLEWIKI_MUSCLE_MAP[key] ?? "";
+  const prefix = lang === "es" ? "https://musclewiki.com/es-es" : "https://musclewiki.com";
+  return slug ? `${prefix}/exercises/male/${slug}` : `${prefix}/exercises`;
+};
+
+const buildYouTubeSearchUrl = (exerciseName: string, lang: string) => {
+  const q = lang === "es"
+    ? `cómo hacer ${exerciseName} técnica correcta`
+    : `how to do ${exerciseName} proper form`;
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+};
+
 const Fit = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
