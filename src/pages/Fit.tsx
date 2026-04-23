@@ -721,6 +721,64 @@ const Fit = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Exercise demo modal with embedded YouTube */}
+      <Dialog open={!!demoExercise} onOpenChange={(o) => !o && setDemoExercise(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Play className="h-4 w-4 text-primary fill-current" />
+              {demoExercise?.nombre}
+            </DialogTitle>
+            <DialogDescription className="flex flex-wrap gap-2 pt-2">
+              {demoExercise?.musculo && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/15 text-primary capitalize font-medium">
+                  {demoExercise.musculo.replace(/_/g, " ")}
+                </span>
+              )}
+              {demoExercise?.equipo && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize font-medium">
+                  {demoExercise.equipo.replace(/_/g, " ")}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {demoExercise && (
+            <div className="space-y-4">
+              <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted border border-border">
+                <iframe
+                  src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`how to do ${demoExercise.nombre} proper form technique`)}`}
+                  title={demoExercise.nombre}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              {demoExercise.descripcion && (
+                <p className="text-sm text-muted-foreground leading-relaxed">{demoExercise.descripcion}</p>
+              )}
+              <div className="flex gap-2">
+                <a
+                  href={`https://musclewiki.com/Search?q=${encodeURIComponent(demoExercise.nombre)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 text-xs px-3 py-2 rounded-md border border-border hover:border-primary hover:text-primary transition"
+                >
+                  <ExternalLink className="h-3 w-3" /> MuscleWiki
+                </a>
+                <a
+                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`how to ${demoExercise.nombre} proper form`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 text-xs px-3 py-2 rounded-md border border-border hover:border-primary hover:text-primary transition"
+                >
+                  <ExternalLink className="h-3 w-3" /> YouTube
+                </a>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
