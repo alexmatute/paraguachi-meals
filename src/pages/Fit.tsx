@@ -124,6 +124,230 @@ const buildYouTubeSearchUrl = (exerciseName: string, lang: string) => {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 };
 
+// ============================================================
+// Progress Overview — goal, weights, body metrics & AI analysis
+// ============================================================
+interface ProgressOverviewProps {
+  prefs: any;
+  profile: any;
+  photos: ProgressPhoto[];
+  sessions: Session[];
+  t: (k: string) => string;
+  lang: string;
+  userId: string;
+}
+
+const ProgressOverview = ({ prefs, profile, photos, sessions, t, lang, userId }: ProgressOverviewProps) => {
+  const storageKey = `fit.desiredWeight.${userId}`;
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [desiredWeight, setDesiredWeight] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(storageKey) || "";
+  });
+  const [tempWeight, setTempWeight] = useState(desiredWeight);
+
+  const saveDesiredWeight = () => {
+    const v = tempWeight.trim();
+    if (v) window.localStorage.setItem(storageKey, v);
+    else window.localStorage.removeItem(storageKey);
+    setDesiredWeight(v);
+    setEditingGoal(false);
+  };
+
+  const objetivo = prefs?.objetivo as string | undefined;
+  const altura = Number(prefs?.altura_cm || profile?.altura_cm || 0);
+  const pesoInicial = Number(prefs?.peso_kg || profile?.peso_kg || 0);
+
+  const sortedAsc = [...photos].sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const startPhoto = sortedAsc.find(p => p.tipo === "inicio") ?? sortedAsc[0];
+  const latestPhoto = photos[0];
+
+  const startWeight = Number(startPhoto?.peso_kg) || pesoInicial || 0;
+  const currentWeight = Number(latestPhoto?.peso_kg) || startWeight;
+  const startWaist = Number(startPhoto?.cintura_cm) || Number(prefs?.cintura_cm) || 0;
+  const currentWaist = Number(latestPhoto?.cintura_cm) || startWaist;
+
+  const target = Number(desiredWeight) || 0;
+  const weightDelta = currentWeight && startWeight ? currentWeight - startWeight : 0;
+  const remainingToGoal = target && currentWeight ? currentWeight - target : 0;
+  const totalToLose = target && startWeight ? startWeight - target : 0;
+  const goalProgressPct = target && startWeight && totalToLose !== 0
+    ? Math.max(0, Math.min(100, ((startWeight - currentWeight) / totalToLose) * 100))
+    : 0;
+
+  const bmi = altura && currentWeight ? currentWeight / Math.pow(altura / 100, 2) : 0;
+  const bmiCategory = (() => {
+    if (!bmi) return "";
+    if (bmi < 18.5) return t("fit.bmiUnder");
+    if (bmi < 25) return t("fit.bmiNormal");
+    if (bmi < 30) return t("fit.bmiOver");
+    return t("fit.bmiObese");
+  })();
+
+  const since = new Date(); since.setDate(since.getDate() - 30);
+  const recent = sessions.filter(s => new Date(s.fecha) >= since);
+  const totalKcal = recent.reduce((acc, s) => acc + (Number(s.kcal) || 0), 0);
+  const totalMin = recent.reduce((acc, s) => acc + (Number(s.duracion_min) || 0), 0);
+  const totalSessions = recent.length;
+  const totalKm = recent.reduce((acc, s) => acc + (Number(s.distancia_km) || 0), 0);
+  const sessionsPerWeek = (totalSessions / 30) * 7;
+
+  const analysisLines: string[] = [];
+  if (objetivo) {
+    if (/perder|fat_loss|grasa|lose/i.test(objetivo)) {
+      if (weightDelta < -0.3) analysisLines.push(t("fit.analysisLosing"));
+      else if (weightDelta > 0.3) analysisLines.push(t("fit.analysisGainingFatGoal"));
+      else if (startWeight) analysisLines.push(t("fit.analysisStable"));
+    } else if (/musculo|muscle|ganar|gain/i.test(objetivo)) {
+      if (weightDelta > 0.3) analysisLines.push(t("fit.analysisGainingMuscle"));
+      else if (weightDelta < -0.3) analysisLines.push(t("fit.analysisLosingMuscleGoal"));
+    } else if (Math.abs(weightDelta) < 0.5 && startWeight) {
+      analysisLines.push(t("fit.analysisMaintaining"));
+    }
+  }
+  if (sessionsPerWeek >= 4) analysisLines.push(t("fit.analysisHighFreq"));
+  else if (sessionsPerWeek >= 2) analysisLines.push(t("fit.analysisMidFreq"));
+  else if (totalSessions > 0) analysisLines.push(t("fit.analysisLowFreq"));
+
+  if (currentWaist && startWaist && currentWaist < startWaist - 1) {
+    analysisLines.push(t("fit.analysisWaistDown").replace("{n}", (startWaist - currentWaist).toFixed(1)));
+  }
+  if (bmi && bmi >= 25) analysisLines.push(t("fit.analysisBmiHigh"));
+  if (totalSessions === 0) analysisLines.push(t("fit.analysisNoData"));
+
+  const objetivoKey = `onboarding.goal.${objetivo}`;
+  const objetivoLabel = objetivo
+    ? (t(objetivoKey) !== objetivoKey ? t(objetivoKey) : objetivo.replace(/_/g, " "))
+    : "—";
+
+  return (
+    <div className="space-y-4">
+      <div className="card-surface p-5">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t("fit.yourGoal")}</p>
+            <h3 className="font-heading text-lg font-bold flex items-center gap-2 mt-1">
+              <Target className="h-5 w-5 text-primary" />
+              <span className="capitalize">{objetivoLabel}</span>
+            </h3>
+          </div>
+          {!editingGoal && (
+            <Button variant="ghost" size="sm" onClick={() => { setTempWeight(desiredWeight); setEditingGoal(true); }} className="h-8 text-xs">
+              {desiredWeight ? t("fit.editGoal") : t("fit.setDesiredWeight")}
+            </Button>
+          )}
+        </div>
+
+        {editingGoal && (
+          <div className="flex items-end gap-2 mb-4 p-3 rounded-lg bg-muted/30 border border-border/40">
+            <div className="flex-1">
+              <Label className="text-xs">{t("fit.desiredWeight")} (kg)</Label>
+              <Input type="number" step="0.1" value={tempWeight} onChange={e => setTempWeight(e.target.value)} placeholder="70" className="mt-1 h-9" />
+            </div>
+            <Button size="sm" onClick={saveDesiredWeight} className="h-9 bg-primary text-primary-foreground">{t("fit.save")}</Button>
+            <Button size="sm" variant="ghost" onClick={() => setEditingGoal(false)} className="h-9">×</Button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-lg bg-muted/40 border border-border/40 p-3 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{t("fit.startWeight")}</p>
+            <p className="font-bold text-lg">{startWeight ? startWeight.toFixed(1) : "—"}</p>
+            <p className="text-[10px] text-muted-foreground">kg</p>
+          </div>
+          <div className="rounded-lg bg-primary/10 border border-primary/30 p-3 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-primary mb-1">{t("fit.currentWeight")}</p>
+            <p className="font-bold text-lg text-primary">{currentWeight ? currentWeight.toFixed(1) : "—"}</p>
+            <p className="text-[10px] text-muted-foreground">kg</p>
+          </div>
+          <div className="rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-secondary mb-1">{t("fit.desiredWeight")}</p>
+            <p className="font-bold text-lg text-secondary">{target ? target.toFixed(1) : "—"}</p>
+            <p className="text-[10px] text-muted-foreground">kg</p>
+          </div>
+        </div>
+
+        {target > 0 && startWeight > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="text-muted-foreground">{t("fit.goalProgress")}</span>
+              <span className="font-bold text-primary">{goalProgressPct.toFixed(0)}%</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all" style={{ width: `${goalProgressPct}%` }} />
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1.5 flex-wrap">
+              {weightDelta < 0 ? <TrendingDown className="h-3 w-3 text-primary" /> : weightDelta > 0 ? <TrendingUp className="h-3 w-3 text-secondary" /> : null}
+              {weightDelta !== 0
+                ? t("fit.weightChange").replace("{kg}", `${weightDelta > 0 ? "+" : ""}${weightDelta.toFixed(1)}`)
+                : t("fit.noWeightChange")}
+              {remainingToGoal !== 0 && target > 0 && (
+                <span className="ml-auto">{t("fit.remaining").replace("{kg}", Math.abs(remainingToGoal).toFixed(1))}</span>
+              )}
+            </p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-4 border-t border-border/50">
+          <MetricMini label={t("fit.height")} value={altura ? `${altura} cm` : "—"} icon={<Scale className="h-3 w-3" />} />
+          <MetricMini label="BMI" value={bmi ? bmi.toFixed(1) : "—"} sub={bmiCategory} />
+          <MetricMini label={t("fit.waist")} value={currentWaist ? `${currentWaist} cm` : "—"} sub={startWaist && currentWaist !== startWaist ? `${currentWaist - startWaist > 0 ? "+" : ""}${(currentWaist - startWaist).toFixed(1)}` : ""} />
+          <MetricMini label={t("fit.dailyKcal")} value={prefs?.calorias_objetivo ? `${Math.round(prefs.calorias_objetivo)}` : "—"} sub="kcal" />
+        </div>
+      </div>
+
+      <div className="card-surface p-5">
+        <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-sm">
+          <Activity className="h-4 w-4 text-primary" /> {t("fit.last30Days")}
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatBlock icon={<Award className="h-4 w-4" />} label={t("fit.statSessions")} value={String(totalSessions)} sub={`${sessionsPerWeek.toFixed(1)} ${t("fit.perWeek")}`} />
+          <StatBlock icon={<Clock className="h-4 w-4" />} label={t("fit.statTime")} value={`${totalMin}`} sub={t("fit.minutes")} />
+          <StatBlock icon={<Flame className="h-4 w-4" />} label={t("fit.statKcal")} value={`${totalKcal}`} sub="kcal" />
+          <StatBlock icon={<TrendingUp className="h-4 w-4" />} label={t("fit.statKm")} value={totalKm ? totalKm.toFixed(1) : "0"} sub="km" />
+        </div>
+      </div>
+
+      <div className="card-surface p-5">
+        <h3 className="font-heading font-semibold flex items-center gap-2 mb-3 text-sm">
+          <Brain className="h-4 w-4 text-primary" /> {t("fit.technicalAnalysis")}
+        </h3>
+        {analysisLines.length === 0 ? (
+          <p className="text-xs text-muted-foreground">{t("fit.analysisNoData")}</p>
+        ) : (
+          <ul className="space-y-2">
+            {analysisLines.map((line, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground/85 leading-relaxed">
+                <span className="text-primary mt-1">→</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MetricMini = ({ label, value, sub, icon }: { label: string; value: string; sub?: string; icon?: React.ReactNode }) => (
+  <div className="text-center">
+    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5 flex items-center justify-center gap-1">{icon}{label}</p>
+    <p className="font-bold text-sm text-foreground">{value}</p>
+    {sub && <p className="text-[10px] text-muted-foreground capitalize">{sub}</p>}
+  </div>
+);
+
+const StatBlock = ({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) => (
+  <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+    <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+      {icon}
+      <p className="text-[10px] uppercase tracking-wider font-medium">{label}</p>
+    </div>
+    <p className="font-bold text-xl text-foreground leading-tight">{value}</p>
+    <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>
+  </div>
+);
+
 const Fit = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
