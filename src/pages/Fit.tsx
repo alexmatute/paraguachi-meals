@@ -133,14 +133,18 @@ const Fit = () => {
 
   const loadAll = async () => {
     setLoadingData(true);
-    const [{ data: r }, { data: s }, { data: p }] = await Promise.all([
+    const [{ data: r }, { data: s }, { data: p }, { data: pref }, { data: prof }] = await Promise.all([
       supabase.from("rutinas_fit").select("*").eq("usuario_id", user!.id).eq("activa", true).order("creado_en", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("sesiones_entrenamiento").select("*").eq("usuario_id", user!.id).order("fecha", { ascending: false }).limit(50),
       supabase.from("fotos_progreso").select("*").eq("usuario_id", user!.id).order("fecha", { ascending: false }).limit(50),
+      supabase.from("preferencias").select("*").eq("usuario_id", user!.id).maybeSingle(),
+      supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle(),
     ]);
     setRoutine(r as Routine | null);
     setSessions((s as Session[]) || []);
     setPhotos((p as ProgressPhoto[]) || []);
+    setPrefs(pref);
+    setProfile(prof);
     setLoadingData(false);
   };
 
