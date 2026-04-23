@@ -102,6 +102,8 @@ const Fit = () => {
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
+  const [prefs, setPrefs] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [diasSemana, setDiasSemana] = useState(3);
