@@ -5,6 +5,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function parsePlanCandidate(value: unknown) {
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+
+  const unfenced = trimmed
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/, "");
+
+  try {
+    const parsed = JSON.parse(unfenced);
+    if (typeof parsed === "string") {
+      try {
+        return JSON.parse(parsed);
+      } catch {
+        return parsed;
+      }
+    }
+    return parsed;
+  } catch {
+    return value;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -132,8 +158,19 @@ Return ONLY valid JSON with the same structure shown above (in English).`;
 
     const aiData = await aiResp.json();
     const content = aiData.choices?.[0]?.message?.content || "{}";
-    let plan;
-    try { plan = JSON.parse(content); } catch { plan = { resumen: content }; }
+
+    let plan = parsePlanCandidate(content);
+
+    if (plan && typeof plan === "object" && "resumen" in plan) {
+      const nested = parsePlanCandidate((plan as Record<string, unknown>).resumen);
+      if (nested && typeof nested === "object" && Array.isArray((nested as Record<string, unknown>).semanas)) {
+        plan = nested;
+      }
+    }
+
+    if (!plan || typeof plan !== "object") {
+      plan = { resumen: typeof content === "string" ? content : "Routine generated" };
+    }
 
     // Desactivar rutinas previas
     await supabase.from("rutinas_fit").update({ activa: false }).eq("usuario_id", user.id).eq("activa", true);
