@@ -68,6 +68,7 @@ const Fit = () => {
   const [diasSemana, setDiasSemana] = useState(3);
   const [duracionMin, setDuracionMin] = useState(45);
   const [activeWeek, setActiveWeek] = useState("1");
+  const [demoExercise, setDemoExercise] = useState<{ nombre: string; descripcion?: string; musculo?: string; equipo?: string } | null>(null);
 
   // Session form
   const [sessionForm, setSessionForm] = useState({ tipo: "", ubicacion: "", intensidad: "", duracion_min: "", kcal: "", distancia_km: "", dispositivo: "", notas: "" });
