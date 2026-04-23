@@ -791,6 +791,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "fit.sessionDuration": "Session duration",
     "fit.express": "Express",
     "fit.days": "days",
+    "fit.watchDemo": "Watch demo",
+    "fit.rest": "Rest",
     "type.walking": "Walking",
     "type.running": "Running",
     "type.cycling": "Cycling",
