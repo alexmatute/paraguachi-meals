@@ -747,6 +747,16 @@ const Fit = () => {
 
           {/* PROGRESS TAB */}
           <TabsContent value="progress" className="space-y-6">
+            <ProgressOverview
+              prefs={prefs}
+              profile={profile}
+              photos={photos}
+              sessions={sessions}
+              t={t}
+              lang={lang}
+              userId={user!.id}
+            />
+
             <div className="card-surface p-5">
               <h3 className="font-heading font-semibold mb-3 flex items-center gap-2"><Camera className="h-4 w-4" />{t("fit.uploadProgress")}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
