@@ -55,6 +55,45 @@ interface ProgressPhoto {
   notas: string | null;
 }
 
+const parsePlanCandidate = (value: unknown): any => {
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+
+  const unfenced = trimmed
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/, "");
+
+  try {
+    const parsed = JSON.parse(unfenced);
+    if (typeof parsed === "string") {
+      try {
+        return JSON.parse(parsed);
+      } catch {
+        return parsed;
+      }
+    }
+    return parsed;
+  } catch {
+    return value;
+  }
+};
+
+const normalizeRoutinePlan = (rawPlan: unknown) => {
+  let parsed = parsePlanCandidate(rawPlan);
+
+  if (parsed && typeof parsed === "object" && "resumen" in parsed) {
+    const nested = parsePlanCandidate((parsed as Record<string, unknown>).resumen);
+    if (nested && typeof nested === "object" && Array.isArray((nested as Record<string, unknown>).semanas)) {
+      parsed = nested;
+    }
+  }
+
+  return parsed && typeof parsed === "object" ? parsed : null;
+};
+
 const Fit = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
@@ -263,7 +302,8 @@ const Fit = () => {
     );
   }
 
-  const plan = routine?.plan_json;
+  const plan = normalizeRoutinePlan(routine?.plan_json);
+  const summaryIsJsonBlob = typeof plan?.resumen === "string" && /^[\[{]/.test(plan.resumen.trim());
 
   return (
     <div className="min-h-screen bg-background">
@@ -342,7 +382,7 @@ const Fit = () => {
                         <Badge variant="outline">{routine.dias_semana} {t("fit.daysWeek")}</Badge>
                         <Badge variant="outline">{routine.duracion_dias} {t("fit.days")}</Badge>
                       </div>
-                      {plan?.resumen && <p className="text-sm text-muted-foreground">{plan.resumen}</p>}
+                      {plan?.resumen && !summaryIsJsonBlob && <p className="text-sm text-muted-foreground">{plan.resumen}</p>}
                     </div>
                   </div>
                   {/* Regenerar con nuevos parámetros */}
