@@ -798,9 +798,9 @@ const Fit = () => {
         </Tabs>
       </main>
 
-      {/* Exercise demo modal with embedded YouTube */}
+      {/* Exercise demo modal — opens external sources that work reliably */}
       <Dialog open={!!demoExercise} onOpenChange={(o) => !o && setDemoExercise(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Play className="h-4 w-4 text-primary fill-current" />
@@ -821,34 +821,31 @@ const Fit = () => {
           </DialogHeader>
           {demoExercise && (
             <div className="space-y-4">
-              <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted border border-border">
-                <iframe
-                  src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`how to do ${demoExercise.nombre} proper form technique`)}`}
-                  title={demoExercise.nombre}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
               {demoExercise.descripcion && (
-                <p className="text-sm text-muted-foreground leading-relaxed">{demoExercise.descripcion}</p>
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                    {t("fit.howTo")}
+                  </p>
+                  <p className="text-sm text-foreground/90 leading-relaxed">{demoExercise.descripcion}</p>
+                </div>
               )}
-              <div className="flex gap-2">
+              <p className="text-xs text-muted-foreground">{t("fit.demoHint")}</p>
+              <div className="grid grid-cols-1 gap-2">
                 <a
-                  href={`https://musclewiki.com/Search?q=${encodeURIComponent(demoExercise.nombre)}`}
+                  href={buildYouTubeSearchUrl(demoExercise.nombre, lang)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 inline-flex items-center justify-center gap-2 text-xs px-3 py-2 rounded-md border border-border hover:border-primary hover:text-primary transition"
+                  className="inline-flex items-center justify-center gap-2 text-sm px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition font-medium"
                 >
-                  <ExternalLink className="h-3 w-3" /> MuscleWiki
+                  <Play className="h-4 w-4 fill-current" /> {t("fit.openYouTube")}
                 </a>
                 <a
-                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`how to ${demoExercise.nombre} proper form`)}`}
+                  href={buildMuscleWikiUrl(demoExercise.musculo, lang)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 inline-flex items-center justify-center gap-2 text-xs px-3 py-2 rounded-md border border-border hover:border-primary hover:text-primary transition"
+                  className="inline-flex items-center justify-center gap-2 text-sm px-4 py-3 rounded-lg border border-border hover:border-primary hover:text-primary transition font-medium"
                 >
-                  <ExternalLink className="h-3 w-3" /> YouTube
+                  <ExternalLink className="h-4 w-4" /> {t("fit.openMuscleWiki")}
                 </a>
               </div>
             </div>
