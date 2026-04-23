@@ -882,6 +882,8 @@ Object.assign(translations.es, {
   "fit.sessionDuration": "Duración por sesión",
   "fit.express": "Express",
   "fit.days": "días",
+  "fit.watchDemo": "Ver demo",
+  "fit.rest": "Descanso",
   "type.walking": "Caminata",
   "type.running": "Correr",
   "type.cycling": "Ciclismo",
