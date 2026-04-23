@@ -389,78 +389,133 @@ const Fit = () => {
                         {semana.enfoque && (
                           <p className="text-xs text-muted-foreground italic px-1">→ {semana.enfoque}</p>
                         )}
-                        <Accordion type="single" collapsible className="space-y-3">
+                        <Accordion type="single" collapsible defaultValue={`s-${semana.numero}-0`} className="space-y-3">
                           {semana.sesiones?.map((ses: any, i: number) => (
                             <AccordionItem
                               key={i}
                               value={`s-${semana.numero}-${i}`}
-                              className="card-surface border border-border/50 rounded-lg px-4 data-[state=open]:border-primary/40"
+                              className="card-surface border border-border/60 rounded-xl px-5 data-[state=open]:border-primary/50 data-[state=open]:shadow-[0_0_0_1px_hsl(var(--primary)/0.15)] transition-all"
                             >
-                              <AccordionTrigger className="hover:no-underline py-4">
-                                <div className="flex flex-1 items-center justify-between gap-3 pr-2">
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
-                                      D{ses.dia}
+                              <AccordionTrigger className="hover:no-underline py-5">
+                                <div className="flex flex-1 items-center justify-between gap-4 pr-2">
+                                  <div className="flex items-center gap-4 min-w-0">
+                                    <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary border border-primary/20">
+                                      <span className="text-[9px] font-medium uppercase tracking-wider opacity-70 leading-none">Día</span>
+                                      <span className="font-bold text-base leading-tight">{ses.dia}</span>
                                     </div>
                                     <div className="text-left min-w-0">
-                                      <p className="font-medium text-sm truncate">{ses.nombre}</p>
-                                      <p className="text-[11px] text-muted-foreground capitalize">{ses.tipo}</p>
+                                      <p className="font-semibold text-base truncate">{ses.nombre}</p>
+                                      <p className="text-xs text-muted-foreground capitalize mt-0.5">
+                                        {ses.tipo} · {ses.ejercicios?.length || 0} {t("fit.exercises").toLowerCase()}
+                                      </p>
                                     </div>
                                   </div>
                                   <div className="hidden sm:flex items-center gap-2 shrink-0">
-                                    <Badge variant="outline" className="text-[10px]"><Clock className="h-2.5 w-2.5 mr-1" />{ses.duracion_min}min</Badge>
-                                    <Badge variant="outline" className="text-[10px]"><Flame className="h-2.5 w-2.5 mr-1" />{ses.kcal_objetivo}kcal</Badge>
+                                    <div className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-muted/50 border border-border/40">
+                                      <Clock className="h-3 w-3 text-primary" />
+                                      <span className="font-medium">{ses.duracion_min}min</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-muted/50 border border-border/40">
+                                      <Flame className="h-3 w-3 text-secondary" />
+                                      <span className="font-medium">{ses.kcal_objetivo}kcal</span>
+                                    </div>
                                   </div>
                                 </div>
                               </AccordionTrigger>
-                              <AccordionContent className="pb-4 space-y-4">
+                              <AccordionContent className="pb-5 space-y-5">
                                 <div className="flex sm:hidden items-center gap-2 flex-wrap">
-                                  <Badge variant="outline" className="text-[10px]"><Clock className="h-2.5 w-2.5 mr-1" />{ses.duracion_min}min</Badge>
-                                  <Badge variant="outline" className="text-[10px]"><Flame className="h-2.5 w-2.5 mr-1" />{ses.kcal_objetivo}kcal</Badge>
+                                  <div className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-muted/50 border border-border/40">
+                                    <Clock className="h-3 w-3 text-primary" /><span className="font-medium">{ses.duracion_min}min</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-muted/50 border border-border/40">
+                                    <Flame className="h-3 w-3 text-secondary" /><span className="font-medium">{ses.kcal_objetivo}kcal</span>
+                                  </div>
                                 </div>
 
                                 {ses.calentamiento?.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-1">🔥 {t("fit.warmup")}</p>
-                                    <ul className="text-sm text-muted-foreground space-y-0.5 pl-4">
-                                      {ses.calentamiento.map((c: string, k: number) => <li key={k} className="list-disc">{c}</li>)}
+                                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Zap className="h-4 w-4 text-primary" />
+                                      <p className="text-xs font-bold uppercase tracking-wider text-primary">{t("fit.warmup")}</p>
+                                    </div>
+                                    <ul className="text-sm text-foreground/80 space-y-1">
+                                      {ses.calentamiento.map((c: string, k: number) => (
+                                        <li key={k} className="flex gap-2"><span className="text-primary">•</span>{c}</li>
+                                      ))}
                                     </ul>
                                   </div>
                                 )}
 
                                 {ses.ejercicios?.length > 0 && (
                                   <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-2">💪 {t("fit.exercises")}</p>
-                                    <div className="space-y-2">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <Dumbbell className="h-4 w-4 text-primary" />
+                                      <p className="text-xs font-bold uppercase tracking-wider text-primary">{t("fit.exercises")} ({ses.ejercicios.length})</p>
+                                    </div>
+                                    <div className="space-y-3">
                                       {ses.ejercicios.map((ej: any, j: number) => {
                                         const muscle = ej.musculo_principal || "full_body";
-                                        const wikiUrl = `https://musclewiki.com/Search?q=${encodeURIComponent(ej.nombre)}`;
-                                        const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`how to ${ej.nombre} proper form`)}`;
                                         return (
-                                          <div key={j} className="rounded-md border border-border/40 bg-muted/20 p-3">
-                                            <div className="flex items-start justify-between gap-3 mb-1.5">
-                                              <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-sm">{ej.nombre}</p>
-                                                <div className="flex flex-wrap gap-1.5 mt-1">
-                                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary capitalize">{muscle.replace("_", " ")}</span>
-                                                  {ej.equipo && <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary/20 text-secondary-foreground capitalize">{ej.equipo.replace("_", " ")}</span>}
+                                          <div key={j} className="rounded-xl border border-border bg-card hover:border-primary/40 transition-colors overflow-hidden">
+                                            <div className="p-4">
+                                              <div className="flex items-start justify-between gap-3 mb-3">
+                                                <div className="flex items-start gap-3 flex-1 min-w-0">
+                                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary text-sm font-bold">
+                                                    {j + 1}
+                                                  </div>
+                                                  <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-base leading-tight">{ej.nombre}</p>
+                                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/15 text-primary capitalize font-medium">
+                                                        {muscle.replace(/_/g, " ")}
+                                                      </span>
+                                                      {ej.equipo && (
+                                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize font-medium">
+                                                          {ej.equipo.replace(/_/g, " ")}
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  </div>
                                                 </div>
                                               </div>
-                                              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground shrink-0">
-                                                <span className="text-foreground font-bold">{ej.series}×{ej.reps}</span>
-                                                {ej.descanso_seg && <span className="text-[10px]">⏱{ej.descanso_seg}s</span>}
+
+                                              {/* Stats grid: series · reps · descanso */}
+                                              <div className="grid grid-cols-3 gap-2 mb-3">
+                                                <div className="rounded-lg bg-muted/40 border border-border/40 p-2 text-center">
+                                                  <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                                                    <Repeat className="h-2.5 w-2.5" /> Series
+                                                  </div>
+                                                  <p className="font-bold text-base text-foreground">{ej.series}</p>
+                                                </div>
+                                                <div className="rounded-lg bg-muted/40 border border-border/40 p-2 text-center">
+                                                  <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                                                    <Target className="h-2.5 w-2.5" /> Reps
+                                                  </div>
+                                                  <p className="font-bold text-base text-foreground">{ej.reps}</p>
+                                                </div>
+                                                <div className="rounded-lg bg-muted/40 border border-border/40 p-2 text-center">
+                                                  <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                                                    <Timer className="h-2.5 w-2.5" /> {t("fit.rest")}
+                                                  </div>
+                                                  <p className="font-bold text-base text-foreground">{ej.descanso_seg || 60}s</p>
+                                                </div>
                                               </div>
-                                            </div>
-                                            {ej.descripcion && (
-                                              <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{ej.descripcion}</p>
-                                            )}
-                                            <div className="flex gap-2">
-                                              <a href={wikiUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-border hover:border-primary hover:text-primary transition">
-                                                <Play className="h-2.5 w-2.5" /> MuscleWiki
-                                              </a>
-                                              <a href={ytUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-border hover:border-primary hover:text-primary transition">
-                                                <Play className="h-2.5 w-2.5" /> YouTube
-                                              </a>
+
+                                              {ej.descripcion && (
+                                                <p className="text-xs text-muted-foreground leading-relaxed mb-3 pl-1 border-l-2 border-primary/30 pl-3">
+                                                  {ej.descripcion}
+                                                </p>
+                                              )}
+
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => setDemoExercise({ nombre: ej.nombre, descripcion: ej.descripcion, musculo: muscle, equipo: ej.equipo })}
+                                                className="w-full h-9 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                                              >
+                                                <Play className="h-3.5 w-3.5 mr-2 fill-current" />
+                                                {t("fit.watchDemo")}
+                                              </Button>
                                             </div>
                                           </div>
                                         );
@@ -470,17 +525,28 @@ const Fit = () => {
                                 )}
 
                                 {ses.enfriamiento?.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-1">🧘 {t("fit.cooldown")}</p>
-                                    <ul className="text-sm text-muted-foreground space-y-0.5 pl-4">
-                                      {ses.enfriamiento.map((c: string, k: number) => <li key={k} className="list-disc">{c}</li>)}
+                                  <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-base">🧘</span>
+                                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("fit.cooldown")}</p>
+                                    </div>
+                                    <ul className="text-sm text-foreground/70 space-y-1">
+                                      {ses.enfriamiento.map((c: string, k: number) => (
+                                        <li key={k} className="flex gap-2"><span className="text-muted-foreground">•</span>{c}</li>
+                                      ))}
                                     </ul>
                                   </div>
                                 )}
 
                                 {ses.ajuste_macros && (
-                                  <div className="rounded-md p-3 bg-secondary/10 border border-secondary/30">
-                                    <p className="text-xs"><strong className="text-secondary-foreground">🥗 {t("fit.macroAdjust")}:</strong> <span className="text-muted-foreground">{ses.ajuste_macros}</span></p>
+                                  <div className="rounded-lg p-4 bg-secondary/10 border border-secondary/40">
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-base">🥗</span>
+                                      <div>
+                                        <p className="text-xs font-bold uppercase tracking-wider text-secondary mb-1">{t("fit.macroAdjust")}</p>
+                                        <p className="text-sm text-foreground/80">{ses.ajuste_macros}</p>
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
                               </AccordionContent>
