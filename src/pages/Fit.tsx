@@ -653,7 +653,7 @@ const Fit = () => {
                 <Sparkles className="h-10 w-10 mx-auto text-primary mb-4" />
                 <h3 className="font-heading text-lg font-semibold">{t("fit.activate")}</h3>
                 <p className="text-sm text-muted-foreground mt-2 mb-6">{t("fit.subtitle")}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto mb-6">
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-6">
                   <div>
                     <Label className="text-xs">{t("fit.daysWeek")}</Label>
                     <Select value={String(diasSemana)} onValueChange={v => setDiasSemana(Number(v))}>
@@ -669,6 +669,27 @@ const Fit = () => {
                       <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {[15, 20, 30, 45, 60, 90].map(n => <SelectItem key={n} value={String(n)}>{n} {t("fit.minutes")}{n <= 20 ? ` · ${t("fit.express")}` : ""}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t("fit.gender")}</Label>
+                    <Select value={genero} onValueChange={v => setGenero(v as "masculino" | "femenino")}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="masculino">{t("fit.male")}</SelectItem>
+                        <SelectItem value="femenino">{t("fit.female")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t("fit.level")}</Label>
+                    <Select value={nivel} onValueChange={v => setNivel(v as "principiante" | "intermedio" | "avanzado")}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="principiante">{t("fit.levelBeginner")}</SelectItem>
+                        <SelectItem value="intermedio">{t("fit.levelIntermediate")}</SelectItem>
+                        <SelectItem value="avanzado">{t("fit.levelAdvanced")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
