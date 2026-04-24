@@ -94,33 +94,61 @@ const normalizeRoutinePlan = (rawPlan: unknown) => {
   return parsed && typeof parsed === "object" ? parsed : null;
 };
 
-// Map muscle group → MuscleWiki body-part slug (browse pages exist & don't 404)
+// ============================================================
+// External demo links — always fall back to a working search page
+// ============================================================
+// Map muscle group (ES/EN, with or without accents) → MuscleWiki body-part slug.
+// Slugs verified against musclewiki.com browse pages.
 const MUSCLEWIKI_MUSCLE_MAP: Record<string, string> = {
-  pecho: "chest", chest: "chest",
-  espalda: "back", back: "back", lats: "back", dorsal: "back",
-  hombros: "shoulders", shoulders: "shoulders", deltoides: "shoulders",
-  biceps: "biceps", bíceps: "biceps",
-  triceps: "triceps", tríceps: "triceps",
-  antebrazo: "forearms", forearms: "forearms",
-  abdomen: "abdominals", abs: "abdominals", core: "abdominals", abdominales: "abdominals",
-  cuadriceps: "quadriceps", cuádriceps: "quadriceps", quads: "quadriceps", piernas: "quadriceps",
-  isquios: "hamstrings", hamstrings: "hamstrings", femoral: "hamstrings",
-  gluteos: "glutes", glúteos: "glutes", glutes: "glutes",
-  pantorrillas: "calves", calves: "calves", gemelos: "calves",
-  trapecio: "traps", traps: "traps",
+  // Chest
+  pecho: "chest", chest: "chest", pectoral: "chest", pectorales: "chest",
+  // Back
+  espalda: "back", back: "back", lats: "back", dorsal: "back", dorsales: "back",
+  // Shoulders
+  hombros: "shoulders", shoulders: "shoulders", deltoides: "shoulders", hombro: "shoulders",
+  // Arms
+  biceps: "biceps", bíceps: "biceps", bicep: "biceps",
+  triceps: "triceps", tríceps: "triceps", tricep: "triceps",
+  brazos: "biceps", arms: "biceps",
+  antebrazo: "forearms", antebrazos: "forearms", forearms: "forearms",
+  // Core
+  abdomen: "abdominals", abs: "abdominals", core: "abdominals",
+  abdominales: "abdominals", abdominal: "abdominals",
+  // Legs
+  cuadriceps: "quadriceps", cuádriceps: "quadriceps", quads: "quadriceps",
+  piernas: "quadriceps", quadriceps: "quadriceps",
+  isquios: "hamstrings", isquiotibiales: "hamstrings", hamstrings: "hamstrings", femoral: "hamstrings",
+  gluteos: "glutes", glúteos: "glutes", glutes: "glutes", gluteo: "glutes", glúteo: "glutes",
+  pantorrillas: "calves", calves: "calves", gemelos: "calves", gemelo: "calves",
+  // Traps & full body
+  trapecio: "traps", traps: "traps", trapecios: "traps",
+  full_body: "", "full-body": "", fullbody: "", cardio: "",
 };
 
-const buildMuscleWikiUrl = (muscle: string | undefined, lang: string) => {
-  const key = (muscle || "").toLowerCase().replace(/\s+/g, "_");
-  const slug = MUSCLEWIKI_MUSCLE_MAP[key] ?? "";
+const normalizeMuscleKey = (muscle: string | undefined): string =>
+  (muscle || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-záéíóúñü_-]/g, "");
+
+const buildMuscleWikiUrl = (muscle: string | undefined, lang: string): string => {
+  const key = normalizeMuscleKey(muscle);
+  const slug = MUSCLEWIKI_MUSCLE_MAP[key];
   const prefix = lang === "es" ? "https://musclewiki.com/es-es" : "https://musclewiki.com";
-  return slug ? `${prefix}/exercises/male/${slug}` : `${prefix}/exercises`;
+  // Specific muscle page (verified pattern: /exercises/male/{slug})
+  if (slug) return `${prefix}/exercises/male/${slug}`;
+  // Fallback to general exercises browse — never 404s
+  return `${prefix}/exercises`;
 };
 
-const buildYouTubeSearchUrl = (exerciseName: string, lang: string) => {
+const buildYouTubeSearchUrl = (exerciseName: string, lang: string): string => {
+  const cleanName = (exerciseName || "exercise").trim();
+  // Always include "proper form" so the search returns tutorial videos.
+  // Keep it short — long Spanish phrases reduce match quality.
   const q = lang === "es"
-    ? `cómo hacer ${exerciseName} técnica correcta`
-    : `how to do ${exerciseName} proper form`;
+    ? `${cleanName} técnica correcta proper form`
+    : `how to ${cleanName} proper form`;
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 };
 
