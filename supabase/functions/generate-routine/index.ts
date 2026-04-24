@@ -85,17 +85,19 @@ Cantidad de ejercicios por sesión: ${numEjercicios}.
 Datos del cliente:
 - Objetivo: ${objetivo}
 - Nivel: ${nivel}
+- Género: ${genero}
 - Equipamiento disponible: ${equipamiento.join(", ")}
-- Edad: ${prefs?.edad || "n/a"} años, ${prefs?.sexo || "n/a"}, ${prefs?.peso_kg || "n/a"}kg
+- Edad: ${prefs?.edad || "n/a"} años, ${genero}, ${prefs?.peso_kg || "n/a"}kg
 - Calorías plan comida: ${prefs?.calorias_objetivo || "n/a"} kcal
 - Proteína plan: ${prefs?.proteina_g || "n/a"}g
 
 REGLAS:
-1. Adapta la intensidad al nivel del usuario (progresión semanal).
-2. Respeta el equipamiento (no inventes máquinas).
-3. Para "perder" prioriza HIIT + fuerza compuesta. Para "ganar" prioriza hipertrofia (8-12 reps). Para "mantener" mezcla cardio+fuerza.
-4. Para cada ejercicio incluye: nombre claro, series, reps, descanso_seg, musculo_principal (uno de: pecho, espalda, hombros, biceps, triceps, abdominales, gluteos, cuadriceps, isquiotibiales, gemelos, cardio, full_body), equipo (ej: peso_corporal, mancuernas, barra, kettlebell, banda, maquina), y descripcion (1 frase de cómo ejecutarlo correctamente).
-5. Estima kcal_objetivo por sesión basado en duración e intensidad.
+1. Adapta la intensidad al nivel del usuario (${nivel}): principiante = técnica básica + cargas ligeras + más descanso; intermedio = volumen moderado y progresión semanal; avanzado = alta intensidad, supersets, periodización.
+2. Adapta la selección de ejercicios al género (${genero}): para femenino prioriza glúteos, piernas y core; para masculino balancea pecho/espalda/piernas. Nunca asumas estereotipos: ambos hacen fuerza compuesta.
+3. Respeta el equipamiento (no inventes máquinas).
+4. Para "perder" prioriza HIIT + fuerza compuesta. Para "ganar" prioriza hipertrofia (8-12 reps). Para "mantener" mezcla cardio+fuerza.
+5. Para cada ejercicio incluye: nombre claro, series, reps, descanso_seg, musculo_principal (uno de: pecho, espalda, hombros, biceps, triceps, abdominales, gluteos, cuadriceps, isquiotibiales, gemelos, cardio, full_body), equipo (ej: peso_corporal, mancuernas, barra, kettlebell, banda, maquina), y descripcion (1 frase de cómo ejecutarlo correctamente).
+6. Estima kcal_objetivo por sesión basado en duración e intensidad.
 
 Devuelve SOLO JSON válido:
 {
