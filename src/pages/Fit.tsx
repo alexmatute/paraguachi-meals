@@ -429,6 +429,14 @@ const Fit = () => {
     setPhotos((p as ProgressPhoto[]) || []);
     setPrefs(pref);
     setProfile(prof);
+    // Hydrate gender & level defaults from existing prefs/routine
+    if (pref?.sexo === "femenino" || pref?.sexo === "masculino") {
+      setGenero(pref.sexo as "masculino" | "femenino");
+    }
+    const lvl = (r as Routine | null)?.nivel || pref?.nivel_experiencia;
+    if (lvl === "principiante" || lvl === "intermedio" || lvl === "avanzado") {
+      setNivel(lvl);
+    }
     setLoadingData(false);
   };
 
@@ -436,7 +444,14 @@ const Fit = () => {
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-routine", {
-        body: { dias_semana: diasSemana, duracion_dias: 28, duracion_min_sesion: duracionMin, lang },
+        body: {
+          dias_semana: diasSemana,
+          duracion_dias: 28,
+          duracion_min_sesion: duracionMin,
+          genero,
+          nivel,
+          lang,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
