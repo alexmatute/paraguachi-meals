@@ -31,6 +31,8 @@ interface Routine {
   duracion_dias: number;
   plan_json: any;
   creado_en: string;
+  nivel?: string | null;
+  equipamiento?: string[] | null;
 }
 
 interface Session {
