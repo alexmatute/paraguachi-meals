@@ -390,6 +390,8 @@ const Fit = () => {
   const [generating, setGenerating] = useState(false);
   const [diasSemana, setDiasSemana] = useState(3);
   const [duracionMin, setDuracionMin] = useState(45);
+  const [genero, setGenero] = useState<"masculino" | "femenino">("masculino");
+  const [nivel, setNivel] = useState<"principiante" | "intermedio" | "avanzado">("principiante");
   const [activeWeek, setActiveWeek] = useState("1");
   const [demoExercise, setDemoExercise] = useState<{ nombre: string; descripcion?: string; musculo?: string; equipo?: string } | null>(null);
 
