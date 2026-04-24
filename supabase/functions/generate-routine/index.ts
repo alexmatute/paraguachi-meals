@@ -48,7 +48,14 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { dias_semana = 3, duracion_dias = 28, duracion_min_sesion = 45, lang = "es" } = body;
+    const {
+      dias_semana = 3,
+      duracion_dias = 28,
+      duracion_min_sesion = 45,
+      lang = "es",
+      genero: bodyGenero,
+      nivel: bodyNivel,
+    } = body;
 
     // Cargar preferencias y perfil
     const { data: prefs } = await supabase
@@ -59,7 +66,9 @@ Deno.serve(async (req) => {
 
     const objetivo = prefs?.objetivo || "mantener";
     const equipamiento = prefs?.equipamiento?.length ? prefs.equipamiento : ["peso_corporal"];
-    const nivel = prefs?.nivel_experiencia || "principiante";
+    // Body params override profile defaults
+    const nivel = bodyNivel || prefs?.nivel_experiencia || "principiante";
+    const genero = bodyGenero || prefs?.sexo || "masculino";
 
     // Bloques de tiempo según duración total
     const warmupMin = duracion_min_sesion <= 20 ? 3 : 5;
@@ -76,17 +85,19 @@ Cantidad de ejercicios por sesión: ${numEjercicios}.
 Datos del cliente:
 - Objetivo: ${objetivo}
 - Nivel: ${nivel}
+- Género: ${genero}
 - Equipamiento disponible: ${equipamiento.join(", ")}
-- Edad: ${prefs?.edad || "n/a"} años, ${prefs?.sexo || "n/a"}, ${prefs?.peso_kg || "n/a"}kg
+- Edad: ${prefs?.edad || "n/a"} años, ${genero}, ${prefs?.peso_kg || "n/a"}kg
 - Calorías plan comida: ${prefs?.calorias_objetivo || "n/a"} kcal
 - Proteína plan: ${prefs?.proteina_g || "n/a"}g
 
 REGLAS:
-1. Adapta la intensidad al nivel del usuario (progresión semanal).
-2. Respeta el equipamiento (no inventes máquinas).
-3. Para "perder" prioriza HIIT + fuerza compuesta. Para "ganar" prioriza hipertrofia (8-12 reps). Para "mantener" mezcla cardio+fuerza.
-4. Para cada ejercicio incluye: nombre claro, series, reps, descanso_seg, musculo_principal (uno de: pecho, espalda, hombros, biceps, triceps, abdominales, gluteos, cuadriceps, isquiotibiales, gemelos, cardio, full_body), equipo (ej: peso_corporal, mancuernas, barra, kettlebell, banda, maquina), y descripcion (1 frase de cómo ejecutarlo correctamente).
-5. Estima kcal_objetivo por sesión basado en duración e intensidad.
+1. Adapta la intensidad al nivel del usuario (${nivel}): principiante = técnica básica + cargas ligeras + más descanso; intermedio = volumen moderado y progresión semanal; avanzado = alta intensidad, supersets, periodización.
+2. Adapta la selección de ejercicios al género (${genero}): para femenino prioriza glúteos, piernas y core; para masculino balancea pecho/espalda/piernas. Nunca asumas estereotipos: ambos hacen fuerza compuesta.
+3. Respeta el equipamiento (no inventes máquinas).
+4. Para "perder" prioriza HIIT + fuerza compuesta. Para "ganar" prioriza hipertrofia (8-12 reps). Para "mantener" mezcla cardio+fuerza.
+5. Para cada ejercicio incluye: nombre claro, series, reps, descanso_seg, musculo_principal (uno de: pecho, espalda, hombros, biceps, triceps, abdominales, gluteos, cuadriceps, isquiotibiales, gemelos, cardio, full_body), equipo (ej: peso_corporal, mancuernas, barra, kettlebell, banda, maquina), y descripcion (1 frase de cómo ejecutarlo correctamente).
+6. Estima kcal_objetivo por sesión basado en duración e intensidad.
 
 Devuelve SOLO JSON válido:
 {
@@ -123,9 +134,10 @@ Exercises per session: ${numEjercicios}.
 
 Client data:
 - Goal: ${objetivo}
-- Level: ${nivel}
+- Level: ${nivel} (beginner=basic technique + light loads + more rest; intermediate=moderate volume + weekly progression; advanced=high intensity + supersets + periodization)
+- Gender: ${genero} (for female prioritize glutes/legs/core balance; for male balance chest/back/legs; both do compound lifts)
 - Equipment: ${equipamiento.join(", ")}
-- Age: ${prefs?.edad || "n/a"}, ${prefs?.sexo || "n/a"}, ${prefs?.peso_kg || "n/a"}kg
+- Age: ${prefs?.edad || "n/a"}, ${genero}, ${prefs?.peso_kg || "n/a"}kg
 - Meal plan kcal: ${prefs?.calorias_objetivo || "n/a"}, protein: ${prefs?.proteina_g || "n/a"}g
 
 For each exercise include: nombre, series, reps, descanso_seg, musculo_principal (chest/back/shoulders/biceps/triceps/abs/glutes/quads/hamstrings/calves/cardio/full_body), equipo, descripcion (1 sentence on form).

@@ -31,6 +31,8 @@ interface Routine {
   duracion_dias: number;
   plan_json: any;
   creado_en: string;
+  nivel?: string | null;
+  equipamiento?: string[] | null;
 }
 
 interface Session {
@@ -94,33 +96,61 @@ const normalizeRoutinePlan = (rawPlan: unknown) => {
   return parsed && typeof parsed === "object" ? parsed : null;
 };
 
-// Map muscle group → MuscleWiki body-part slug (browse pages exist & don't 404)
+// ============================================================
+// External demo links — always fall back to a working search page
+// ============================================================
+// Map muscle group (ES/EN, with or without accents) → MuscleWiki body-part slug.
+// Slugs verified against musclewiki.com browse pages.
 const MUSCLEWIKI_MUSCLE_MAP: Record<string, string> = {
-  pecho: "chest", chest: "chest",
-  espalda: "back", back: "back", lats: "back", dorsal: "back",
-  hombros: "shoulders", shoulders: "shoulders", deltoides: "shoulders",
-  biceps: "biceps", bíceps: "biceps",
-  triceps: "triceps", tríceps: "triceps",
-  antebrazo: "forearms", forearms: "forearms",
-  abdomen: "abdominals", abs: "abdominals", core: "abdominals", abdominales: "abdominals",
-  cuadriceps: "quadriceps", cuádriceps: "quadriceps", quads: "quadriceps", piernas: "quadriceps",
-  isquios: "hamstrings", hamstrings: "hamstrings", femoral: "hamstrings",
-  gluteos: "glutes", glúteos: "glutes", glutes: "glutes",
-  pantorrillas: "calves", calves: "calves", gemelos: "calves",
-  trapecio: "traps", traps: "traps",
+  // Chest
+  pecho: "chest", chest: "chest", pectoral: "chest", pectorales: "chest",
+  // Back
+  espalda: "back", back: "back", lats: "back", dorsal: "back", dorsales: "back",
+  // Shoulders
+  hombros: "shoulders", shoulders: "shoulders", deltoides: "shoulders", hombro: "shoulders",
+  // Arms
+  biceps: "biceps", bíceps: "biceps", bicep: "biceps",
+  triceps: "triceps", tríceps: "triceps", tricep: "triceps",
+  brazos: "biceps", arms: "biceps",
+  antebrazo: "forearms", antebrazos: "forearms", forearms: "forearms",
+  // Core
+  abdomen: "abdominals", abs: "abdominals", core: "abdominals",
+  abdominales: "abdominals", abdominal: "abdominals",
+  // Legs
+  cuadriceps: "quadriceps", cuádriceps: "quadriceps", quads: "quadriceps",
+  piernas: "quadriceps", quadriceps: "quadriceps",
+  isquios: "hamstrings", isquiotibiales: "hamstrings", hamstrings: "hamstrings", femoral: "hamstrings",
+  gluteos: "glutes", glúteos: "glutes", glutes: "glutes", gluteo: "glutes", glúteo: "glutes",
+  pantorrillas: "calves", calves: "calves", gemelos: "calves", gemelo: "calves",
+  // Traps & full body
+  trapecio: "traps", traps: "traps", trapecios: "traps",
+  full_body: "", "full-body": "", fullbody: "", cardio: "",
 };
 
-const buildMuscleWikiUrl = (muscle: string | undefined, lang: string) => {
-  const key = (muscle || "").toLowerCase().replace(/\s+/g, "_");
-  const slug = MUSCLEWIKI_MUSCLE_MAP[key] ?? "";
+const normalizeMuscleKey = (muscle: string | undefined): string =>
+  (muscle || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-záéíóúñü_-]/g, "");
+
+const buildMuscleWikiUrl = (muscle: string | undefined, lang: string): string => {
+  const key = normalizeMuscleKey(muscle);
+  const slug = MUSCLEWIKI_MUSCLE_MAP[key];
   const prefix = lang === "es" ? "https://musclewiki.com/es-es" : "https://musclewiki.com";
-  return slug ? `${prefix}/exercises/male/${slug}` : `${prefix}/exercises`;
+  // Specific muscle page (verified pattern: /exercises/male/{slug})
+  if (slug) return `${prefix}/exercises/male/${slug}`;
+  // Fallback to general exercises browse — never 404s
+  return `${prefix}/exercises`;
 };
 
-const buildYouTubeSearchUrl = (exerciseName: string, lang: string) => {
+const buildYouTubeSearchUrl = (exerciseName: string, lang: string): string => {
+  const cleanName = (exerciseName || "exercise").trim();
+  // Always include "proper form" so the search returns tutorial videos.
+  // Keep it short — long Spanish phrases reduce match quality.
   const q = lang === "es"
-    ? `cómo hacer ${exerciseName} técnica correcta`
-    : `how to do ${exerciseName} proper form`;
+    ? `${cleanName} técnica correcta proper form`
+    : `how to ${cleanName} proper form`;
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 };
 
@@ -362,6 +392,8 @@ const Fit = () => {
   const [generating, setGenerating] = useState(false);
   const [diasSemana, setDiasSemana] = useState(3);
   const [duracionMin, setDuracionMin] = useState(45);
+  const [genero, setGenero] = useState<"masculino" | "femenino">("masculino");
+  const [nivel, setNivel] = useState<"principiante" | "intermedio" | "avanzado">("principiante");
   const [activeWeek, setActiveWeek] = useState("1");
   const [demoExercise, setDemoExercise] = useState<{ nombre: string; descripcion?: string; musculo?: string; equipo?: string } | null>(null);
 
@@ -399,6 +431,14 @@ const Fit = () => {
     setPhotos((p as ProgressPhoto[]) || []);
     setPrefs(pref);
     setProfile(prof);
+    // Hydrate gender & level defaults from existing prefs/routine
+    if (pref?.sexo === "femenino" || pref?.sexo === "masculino") {
+      setGenero(pref.sexo as "masculino" | "femenino");
+    }
+    const lvl = (r as Routine | null)?.nivel || pref?.nivel_experiencia;
+    if (lvl === "principiante" || lvl === "intermedio" || lvl === "avanzado") {
+      setNivel(lvl);
+    }
     setLoadingData(false);
   };
 
@@ -406,7 +446,14 @@ const Fit = () => {
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-routine", {
-        body: { dias_semana: diasSemana, duracion_dias: 28, duracion_min_sesion: duracionMin, lang },
+        body: {
+          dias_semana: diasSemana,
+          duracion_dias: 28,
+          duracion_min_sesion: duracionMin,
+          genero,
+          nivel,
+          lang,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -606,7 +653,7 @@ const Fit = () => {
                 <Sparkles className="h-10 w-10 mx-auto text-primary mb-4" />
                 <h3 className="font-heading text-lg font-semibold">{t("fit.activate")}</h3>
                 <p className="text-sm text-muted-foreground mt-2 mb-6">{t("fit.subtitle")}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto mb-6">
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-6">
                   <div>
                     <Label className="text-xs">{t("fit.daysWeek")}</Label>
                     <Select value={String(diasSemana)} onValueChange={v => setDiasSemana(Number(v))}>
@@ -622,6 +669,27 @@ const Fit = () => {
                       <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {[15, 20, 30, 45, 60, 90].map(n => <SelectItem key={n} value={String(n)}>{n} {t("fit.minutes")}{n <= 20 ? ` · ${t("fit.express")}` : ""}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t("fit.gender")}</Label>
+                    <Select value={genero} onValueChange={v => setGenero(v as "masculino" | "femenino")}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="masculino">{t("fit.male")}</SelectItem>
+                        <SelectItem value="femenino">{t("fit.female")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t("fit.level")}</Label>
+                    <Select value={nivel} onValueChange={v => setNivel(v as "principiante" | "intermedio" | "avanzado")}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="principiante">{t("fit.levelBeginner")}</SelectItem>
+                        <SelectItem value="intermedio">{t("fit.levelIntermediate")}</SelectItem>
+                        <SelectItem value="avanzado">{t("fit.levelAdvanced")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -646,7 +714,7 @@ const Fit = () => {
                     </div>
                   </div>
                   {/* Regenerar con nuevos parámetros */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-border/50">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-border/50">
                     <div>
                       <Label className="text-xs">{t("fit.daysWeek")}</Label>
                       <Select value={String(diasSemana)} onValueChange={v => setDiasSemana(Number(v))}>
@@ -665,7 +733,28 @@ const Fit = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex items-end">
+                    <div>
+                      <Label className="text-xs">{t("fit.gender")}</Label>
+                      <Select value={genero} onValueChange={v => setGenero(v as "masculino" | "femenino")}>
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="masculino">{t("fit.male")}</SelectItem>
+                          <SelectItem value="femenino">{t("fit.female")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">{t("fit.level")}</Label>
+                      <Select value={nivel} onValueChange={v => setNivel(v as "principiante" | "intermedio" | "avanzado")}>
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="principiante">{t("fit.levelBeginner")}</SelectItem>
+                          <SelectItem value="intermedio">{t("fit.levelIntermediate")}</SelectItem>
+                          <SelectItem value="avanzado">{t("fit.levelAdvanced")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end col-span-2 sm:col-span-1">
                       <Button variant="outline" size="sm" onClick={handleGenerate} disabled={generating} className="w-full h-9">
                         {generating ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
                         {t("fit.regenerate")}
