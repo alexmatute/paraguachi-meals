@@ -714,7 +714,7 @@ const Fit = () => {
                     </div>
                   </div>
                   {/* Regenerar con nuevos parámetros */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-border/50">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-border/50">
                     <div>
                       <Label className="text-xs">{t("fit.daysWeek")}</Label>
                       <Select value={String(diasSemana)} onValueChange={v => setDiasSemana(Number(v))}>
@@ -733,7 +733,28 @@ const Fit = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex items-end">
+                    <div>
+                      <Label className="text-xs">{t("fit.gender")}</Label>
+                      <Select value={genero} onValueChange={v => setGenero(v as "masculino" | "femenino")}>
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="masculino">{t("fit.male")}</SelectItem>
+                          <SelectItem value="femenino">{t("fit.female")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">{t("fit.level")}</Label>
+                      <Select value={nivel} onValueChange={v => setNivel(v as "principiante" | "intermedio" | "avanzado")}>
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="principiante">{t("fit.levelBeginner")}</SelectItem>
+                          <SelectItem value="intermedio">{t("fit.levelIntermediate")}</SelectItem>
+                          <SelectItem value="avanzado">{t("fit.levelAdvanced")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end col-span-2 sm:col-span-1">
                       <Button variant="outline" size="sm" onClick={handleGenerate} disabled={generating} className="w-full h-9">
                         {generating ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
                         {t("fit.regenerate")}
