@@ -134,9 +134,10 @@ Exercises per session: ${numEjercicios}.
 
 Client data:
 - Goal: ${objetivo}
-- Level: ${nivel}
+- Level: ${nivel} (beginner=basic technique + light loads + more rest; intermediate=moderate volume + weekly progression; advanced=high intensity + supersets + periodization)
+- Gender: ${genero} (for female prioritize glutes/legs/core balance; for male balance chest/back/legs; both do compound lifts)
 - Equipment: ${equipamiento.join(", ")}
-- Age: ${prefs?.edad || "n/a"}, ${prefs?.sexo || "n/a"}, ${prefs?.peso_kg || "n/a"}kg
+- Age: ${prefs?.edad || "n/a"}, ${genero}, ${prefs?.peso_kg || "n/a"}kg
 - Meal plan kcal: ${prefs?.calorias_objetivo || "n/a"}, protein: ${prefs?.proteina_g || "n/a"}g
 
 For each exercise include: nombre, series, reps, descanso_seg, musculo_principal (chest/back/shoulders/biceps/triceps/abs/glutes/quads/hamstrings/calves/cardio/full_body), equipo, descripcion (1 sentence on form).
