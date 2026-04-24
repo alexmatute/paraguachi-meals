@@ -48,7 +48,14 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { dias_semana = 3, duracion_dias = 28, duracion_min_sesion = 45, lang = "es" } = body;
+    const {
+      dias_semana = 3,
+      duracion_dias = 28,
+      duracion_min_sesion = 45,
+      lang = "es",
+      genero: bodyGenero,
+      nivel: bodyNivel,
+    } = body;
 
     // Cargar preferencias y perfil
     const { data: prefs } = await supabase
@@ -59,7 +66,9 @@ Deno.serve(async (req) => {
 
     const objetivo = prefs?.objetivo || "mantener";
     const equipamiento = prefs?.equipamiento?.length ? prefs.equipamiento : ["peso_corporal"];
-    const nivel = prefs?.nivel_experiencia || "principiante";
+    // Body params override profile defaults
+    const nivel = bodyNivel || prefs?.nivel_experiencia || "principiante";
+    const genero = bodyGenero || prefs?.sexo || "masculino";
 
     // Bloques de tiempo según duración total
     const warmupMin = duracion_min_sesion <= 20 ? 3 : 5;
